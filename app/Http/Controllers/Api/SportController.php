@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\sport;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class SportController extends Controller
@@ -122,5 +123,29 @@ class SportController extends Controller
             'message' => 'Deporte eliminado correctamente',
             'status' => 200,
         ], 200);
+    }
+
+    public function imageUpload(Request $request)
+    {
+        // Validar que el archivo sea una imagen
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        // Guardar la imagen en storage/app/public/images
+        $path = $request->file('image')->store('public/images');
+
+        // Obtener la URL de acceso público
+        $imageUrl = Storage::url($path);
+
+        // Guardar en la base de datos
+        $image = new sport();
+        $image->path = $imageUrl;
+        $image->save();
+
+        return response()->json([
+            'message' => 'Imagen subida con éxito',
+            'image_url' => asset($imageUrl)
+        ]);
     }
 }
