@@ -125,27 +125,30 @@ class SportController extends Controller
         ], 200);
     }
 
-    public function imageUpload(Request $request)
-    {
-        // Validar que el archivo sea una imagen
-        $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
-
-        // Guardar la imagen en storage/app/public/images
-        $path = $request->file('image')->store('public/images');
-
-        // Obtener la URL de acceso público
-        $imageUrl = Storage::url($path);
-
-        // Guardar en la base de datos
-        $image = new sport();
-        $image->path = $imageUrl;
-        $image->save();
-
-        return response()->json([
-            'message' => 'Imagen subida con éxito',
-            'image_url' => asset($imageUrl)
-        ]);
+    public function imageUpload(Request $request, $id)
+    {{
+        $sport = sport::find($id);
+    
+        if (!$sport) {
+            return response()->json(['message' => 'Deporte no encontrado'], 404);
+        }
+    
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $path = $image->store('sports_images', 'public'); 
+    
+            // Guardar ruta en la BD
+            $sport->image = url("storage/$path");
+            $sport->save();
+    
+            return response()->json([
+                'message' => 'Imagen subida correctamente',
+                'image_url' => $sport->image
+            ], 200);
+        }
+    
+        return response()->json(['message' => 'No se recibió una imagen'], 400);
     }
+}
+        
 }

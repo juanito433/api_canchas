@@ -36,26 +36,4 @@ Route::post('/courts/{court}/modes', [ModeController::class, 'store']);
 
 
 Route::get('/canchas', [SportcourtController::class, 'getCanchas']);
-Route::post('/sport/upload/{id}', function (Request $request, $id) {
-    $sport = sport::find($id);
-
-    if (!$sport) {
-        return response()->json(['message' => 'Deporte no encontrado'], 404);
-    }
-
-    if ($request->hasFile('image')) {
-        $image = $request->file('image');
-        $path = $image->store('sports_images', 'public'); // Guardar en storage/app/public/sports_images
-
-        // Guardar ruta en la BD
-        $sport->image = url("storage/$path");
-        $sport->save();
-
-        return response()->json([
-            'message' => 'Imagen subida correctamente',
-            'image_url' => $sport->image
-        ], 200);
-    }
-
-    return response()->json(['message' => 'No se recibió una imagen'], 400);
-});
+Route::post('/sport/upload/{id}', [SportController::class, 'imageUpload']);
