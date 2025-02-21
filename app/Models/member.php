@@ -9,4 +9,12 @@ class member extends Model
 {
     /** @use HasFactory<\Database\Factories\MemberFactory> */
     use HasFactory;
+
+    protected $fillable = [
+        'name',
+        'lastname',
+        'email',
+        'password',
+        'phone'
+    ];
 }
