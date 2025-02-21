@@ -126,29 +126,28 @@ class SportController extends Controller
     }
 
     public function imageUpload(Request $request, $id)
-    {{
-        $sport = sport::find($id);
-    
-        if (!$sport) {
-            return response()->json(['message' => 'Deporte no encontrado'], 404);
+    { {
+            $sport = sport::find($id);
+
+            if (!$sport) {
+                return response()->json(['message' => 'Deporte no encontrado'], 404);
+            }
+
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                $path = $image->store('sports_images', 'public');
+
+                // Guardar ruta en la BD
+                $sport->image = url("storage/$path");
+                $sport->save();
+
+                return response()->json([
+                    'message' => 'Imagen subida correctamente',
+                    'image_url' => $sport->image
+                ], 200);
+            }
+
+            return response()->json(['message' => 'No se recibió una imagen'], 400);
         }
-    
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $path = $image->store('sports_images', 'public'); 
-    
-            // Guardar ruta en la BD
-            $sport->image = url("storage/$path");
-            $sport->save();
-    
-            return response()->json([
-                'message' => 'Imagen subida correctamente',
-                'image_url' => $sport->image
-            ], 200);
-        }
-    
-        return response()->json(['message' => 'No se recibió una imagen'], 400);
     }
-}
-        
 }
