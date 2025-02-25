@@ -20,6 +20,10 @@ class mode extends Model
     {
         return $this->belongsTo(sportcourt::class);
     }
-
+    // Relación uno a muchos con Mode
+    public function mode()
+    {
+        return $this->belongsTo(sportcourt::class);
+    }
 
 }

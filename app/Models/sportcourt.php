@@ -24,6 +24,7 @@ class sportcourt extends Model
     {
         return $this->hasMany(mode::class);
     }
+
 }
 
 

@@ -18,7 +18,7 @@ class sport extends Model
 
 
     // Relación uno a muchos con SportCourt
-    public function courts()
+    public function sportCourts()
     {
         return $this->hasMany(sportcourt::class);
     }

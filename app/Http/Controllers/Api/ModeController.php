@@ -10,6 +10,11 @@ use Illuminate\Support\Facades\Validator;
 
 class ModeController extends Controller
 {
+    //listar todas las modalidades
+    public function all(){
+        $mode = mode::all();
+        return response()->json($mode, 200);
+    }
     //listar todas la modalidades de una cancha especifica
     public function index($sportcourt_id)
     {
@@ -79,8 +84,8 @@ class ModeController extends Controller
         ], 201);
     }
     //actualizar una modalidad
-    public function update(Request $request, $id){
-        $mode = mode::find($id);
+    public function update(Request $request){
+        $mode = mode::find($request->id);
         if (!$mode) {
             return response()->json([
                 'message' => 'Modalidad no encontrado',

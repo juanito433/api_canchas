@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\sport;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,7 +18,8 @@ class SportcourtFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'sport_id' => sport::inRandomOrder()->first()?->id ?? null,
+            'num_sportcourt' => $this->faker->randomDigitNotNull,
         ];
     }
 }

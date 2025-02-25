@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\sportcourt;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,7 +18,11 @@ class ModeFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'name' => $this->faker->randomElement(["Libre", "Doble"]),
+            'date' => $this->faker->date,
+            'start_time' => $this->faker->time,
+            'end_time' => $this->faker->time,
+            'sportcourt_id' => sportcourt::inRandomOrder()->first()?->id ?? null,
         ];
     }
 }

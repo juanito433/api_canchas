@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\mode;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -12,6 +13,6 @@ class ModeSeeder extends Seeder
      */
     public function run(): void
     {
-        //
+        mode::factory()->count(10)->create();
     }
 }

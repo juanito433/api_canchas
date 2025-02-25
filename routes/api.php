@@ -24,16 +24,9 @@ Route::delete('/sports/{id}', [SportController::class, 'destroy']);
 
 //Rutas para el Controlador SportCourtController
 //Administradas por el admin y consultadas por los miembros
-
 Route::get('/sports/{sport}/courts', [SportCourtController::class, 'index']);
+
 Route::post('/sports/{sport}/courts', [SportCourtController::class, 'store']);
-
-
-//Rutas para el controlador ModeController
-
-Route::get('/courts/{court}/modes', [ModeController::class, 'index']);
-Route::post('/courts/{court}/modes', [ModeController::class, 'store']);
-
 
 
 Route::get('/canchas', [SportcourtController::class, 'getCanchas']);
@@ -62,13 +55,15 @@ Route::put('/members/{id}', [MemberController::class, 'update']);
 
 
 //Rutas para el controlador ModeController
-
 //Ruta para visualizar todas las modalidades
-Route::get('/modes', [ModeController::class, 'index']);
+Route::get('/modes', [ModeController::class, 'all']);
 //Rutas para visualizar una sola modalidad
 Route::get('/modes/{id}', [ModeController::class, 'show']);
+//Ruta para visualizar todas las modalidades de una cancha
+Route::get('/courts/{court}/modes', [ModeController::class, 'index']);
 //Ruta para registrar una modalidad
-Route::post('/modes', [ModeController::class, 'store']);
+Route::post('/courts/{court}/modes', [ModeController::class, 'store']);
+//Ruta para actualizar una modalidad
+Route::put('/courts/{court}/modes/{id}', [ModeController::class, 'update']);
 //Ruta para eliminar una modalidad
 Route::delete('/modes/{id}', [ModeController::class, 'destroy']);
-
