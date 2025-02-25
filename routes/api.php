@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\MemberController;
 use App\Http\Controllers\Api\ModeController;
 use App\Http\Controllers\Api\SportController;
 use App\Http\Controllers\Api\SportCourtController;
@@ -37,3 +38,24 @@ Route::post('/courts/{court}/modes', [ModeController::class, 'store']);
 
 Route::get('/canchas', [SportcourtController::class, 'getCanchas']);
 Route::post('/sport/upload/{id}', [SportController::class, 'imageUpload']);
+
+
+
+
+
+//Rutas para el controlador MemberController
+
+//Ruta para visualizar todos los miembros
+Route::get('/members', [MemberController::class, 'index']);
+//Ruta para visualizar un solo miembro
+Route::get('/members/{id}', [MemberController::class, 'show']);
+//Ruta para registrar un miembro
+Route::post('/members', [MemberController::class, 'store']);
+//Ruta para loguear un miembro
+Route::post('/members/login', [MemberController::class, 'login']);
+//Ruta para cerrar sesión de un miembro
+Route::post('/members/logout', [MemberController::class, 'logout']);
+//Ruta para eliminar un miembro
+Route::delete('/members/{id}', [MemberController::class, 'destroy']);
+//Ruta para actualizar un miembro
+Route::put('/members/{id}', [MemberController::class, 'update']);
