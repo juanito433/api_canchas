@@ -18,4 +18,14 @@ class member extends Model
         'password',
         'phone'
     ];
+    //un miembro puede tener muchas reservas
+    public function reservations()
+    {
+        return $this->hasMany(reservation::class);
+    }
+    //una reservacion puede tener muchos compañeros
+    public function teammates()
+    {
+        return $this->hasMany(reservation::class);
+    }
 }

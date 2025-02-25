@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\reservation;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -12,6 +13,6 @@ class ReportSeeder extends Seeder
      */
     public function run(): void
     {
-        //
+        reservation::factory()->count(5)->create();
     }
 }

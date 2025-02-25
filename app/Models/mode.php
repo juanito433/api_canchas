@@ -25,5 +25,10 @@ class mode extends Model
     {
         return $this->belongsTo(sportcourt::class);
     }
+    //una modalidad puede tener muchas reservas
+    public function reservations()
+    {
+        return $this->hasMany(reservation::class);
+    }
 
 }
