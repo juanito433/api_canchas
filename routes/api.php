@@ -59,3 +59,16 @@ Route::post('/members/logout', [MemberController::class, 'logout']);
 Route::delete('/members/{id}', [MemberController::class, 'destroy']);
 //Ruta para actualizar un miembro
 Route::put('/members/{id}', [MemberController::class, 'update']);
+
+
+//Rutas para el controlador ModeController
+
+//Ruta para visualizar todas las modalidades
+Route::get('/modes', [ModeController::class, 'index']);
+//Rutas para visualizar una sola modalidad
+Route::get('/modes/{id}', [ModeController::class, 'show']);
+//Ruta para registrar una modalidad
+Route::post('/modes', [ModeController::class, 'store']);
+//Ruta para eliminar una modalidad
+Route::delete('/modes/{id}', [ModeController::class, 'destroy']);
+
