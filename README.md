@@ -5,6 +5,7 @@ Este proyecto es una api de canchas
 ## requirements
 Para desarrollar este proyecto se hizo uso de;
 - **Laragon en su version 6.0.
+- Laravel 12.0.1
 - **php 8.3.11v 
 - **Node 18.8.0v
 - **npm 8.18.0v
