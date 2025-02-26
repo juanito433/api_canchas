@@ -67,3 +67,7 @@ Route::post('/courts/{court}/modes', [ModeController::class, 'store']);
 Route::put('/courts/{court}/modes/{id}', [ModeController::class, 'update']);
 //Ruta para eliminar una modalidad
 Route::delete('/modes/{id}', [ModeController::class, 'destroy']);
+
+
+
+//

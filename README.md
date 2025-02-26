@@ -48,5 +48,4 @@ php artisan serve
 Use Potman o la extención Thunder Client si usa VSC
 ## Class Diagram
 
-![alt text](<public/image/Captura de pantalla 2025-02-10 121841.png>)
-
+![alt text](<public/image/diagrama de clases final.png>)
