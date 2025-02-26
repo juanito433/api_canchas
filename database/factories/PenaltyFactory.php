@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Models\admin;
+use App\Models\member;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,7 +19,12 @@ class PenaltyFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'member_id' => member::inRandomOrder()->first()?->id ?? null,
+            'admin_id' => admin::inRandomOrder()->first()?->id ?? null,
+            'cause' => $this->faker->sentence(10),
+            'penalty' => $this->faker->sentence(10),
+            'date' => $this->faker->date(),
+
         ];
     }
 }

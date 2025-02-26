@@ -28,4 +28,9 @@ class member extends Model
     {
         return $this->hasMany(reservation::class);
     }
+    //un miembro puede tener muchas penalizaciones
+    public function penalties()
+    {
+        return $this->hasMany(penalty::class);
+    }
 }

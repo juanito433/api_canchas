@@ -25,6 +25,14 @@ class sportcourt extends Model
         return $this->hasMany(mode::class);
     }
 
+
+    //Relacion con schedules
+    //Una cancha puede tener muchos horarios
+    public function schedules()
+    {
+        return $this->hasMany(schedules::class);
+    }
+    
 }
 
 

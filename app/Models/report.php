@@ -9,4 +9,9 @@ class report extends Model
 {
     /** @use HasFactory<\Database\Factories\ReportFactory> */
     use HasFactory;
+
+    protected $fillable = [
+        'admin_id',
+        'pdf_url',
+    ];
 }

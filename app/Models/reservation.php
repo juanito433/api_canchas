@@ -12,7 +12,7 @@ class reservation extends Model
 
     protected $fillable = [
         'member_id',
-        'modes_id',
+        'schedule_id',
         'teammates',
         'date',
         'confirmation',
@@ -33,4 +33,14 @@ class reservation extends Model
     {
         return $this->hasMany(member::class);
     }
+
+    //Relación con schedules
+    //una reservacion solo puede tener un horario
+    public function schedules()
+    {
+        return $this->belongsTo(schedules::class);
+    }
+    
+
+    
 }

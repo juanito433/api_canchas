@@ -22,6 +22,7 @@ class MemberFactory extends Factory
             'email' => $this->faker->unique()->safeEmail(),
             'password' => $this->faker->password(),
             'phone' => $this->faker->phoneNumber(),
+            
         ];
     }
 }

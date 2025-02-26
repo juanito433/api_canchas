@@ -14,11 +14,7 @@ return new class extends Migration
         Schema::create('modes', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->date('date');
-            $table->time('start_time');
-            $table->time('end_time');
-            $table->unsignedBigInteger('sportcourt_id'); 
-            $table->foreign('sportcourt_id')->references('id')->on('sportcourts')->onDelete('cascade');    
+            $table->string('description');
             $table->timestamps();
         });
     }
