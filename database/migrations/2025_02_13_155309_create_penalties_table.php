@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreign('member_id')->references('id')->on('members')->onDelete('cascade');
             $table->string('cause');
             $table->date('date');
+            $table->date('expiration_date');
             $table->string('penalty');
             $table->unsignedBigInteger('admin_id');
             $table->foreign('admin_id')->references('id')->on('admins')->onDelete('cascade');

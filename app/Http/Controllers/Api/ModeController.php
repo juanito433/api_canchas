@@ -40,25 +40,12 @@ class ModeController extends Controller
         }
         return response()->json($mode, 200);
     }
-
-
-    // Agregar una nueva modalidad a un cancha
-    public function store(Request $request, $sportcourt_id)
-    {
-        $sportcourt = sportcourt::find($sportcourt_id);
-
-        if (!$sportcourt) {
-            return response()->json([
-                'message' => 'Cancha no encontrado',
-                'status' => 404,
-            ], 404);
-        }
-
+    //Crear una modalidad
+    public function store(Request $request){
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:255',
-            'date' => 'required|date',
-            'start_time'=> 'required|date_format:H:i:s',
-            'end_time'=> 'required|date_format:H:i:s',
+            'description' => 'required',
+            'sportcourt_id' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -69,24 +56,18 @@ class ModeController extends Controller
             ], 400);
         }
 
-        $mode = Mode::create([
+        $mode = mode::create([
             'name' => $request->name,
-            'date' => $request->date,
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
-            'sportcourt_id' => $sportcourt->id,
+            'description' => $request->description,
+            'sportcourt_id' => $request->sportcourt_id,
         ]);
 
-        return response()->json([
-            'mode' => $mode,
-            'message' => 'Cancha agregada correctamente',
-            'status' => 201,
-        ], 201);
+        return response()->json($mode, 201);
     }
     //actualizar una modalidad
     public function update(Request $request){
         $mode = mode::find($request->id);
-        if (!$mode) {
+        if(!$mode){
             return response()->json([
                 'message' => 'Modalidad no encontrado',
                 'status' => 404,
@@ -94,9 +75,8 @@ class ModeController extends Controller
         }
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:255',
-            'date' => 'required|date',
-            'start_time'=> 'required|date_format:H:i:s',
-            'end_time'=> 'required|date_format:H:i:s',
+            'description' => 'required',
+            'sportcourt_id' => 'required',
         ]);
         if ($validator->fails()) {
             return response()->json([
@@ -105,21 +85,22 @@ class ModeController extends Controller
                 'status' => 400,
             ], 400);
         }
-        $mode->name = $request->name;
-        $mode->date = $request->date;
-        $mode->start_time = $request->start_time;
-        $mode->end_time = $request->end_time;
-        $mode->save();
+        $mode->update(
+            [
+                'name' => $request->name,
+                'description' => $request->description,
+                'sportcourt_id' => $request->sportcourt_id,
+            ]
+        );
         return response()->json([
-            'mode'=>$mode,
-            'message' =>  'Modlaidad actualizada correctamente',
-            'status' => 200,            
+            'message' => 'Modalidad actualizado correctamente',
+            'status' => 200,
         ], 200);
     }
     //eliminar una modalidad
-    public function destroy($id){
-        $mode = mode::find($id);
-        if (!$mode) {
+    public function destroy(Request $request){
+        $mode = mode::find($request->id);
+        if(!$mode){
             return response()->json([
                 'message' => 'Modalidad no encontrado',
                 'status' => 404,
@@ -127,7 +108,7 @@ class ModeController extends Controller
         }
         $mode->delete();
         return response()->json([
-            'message' => 'Modalidad eliminada correctamente',
+            'message' => 'Modalidad eliminado correctamente',
             'status' => 200,
         ], 200);
     }
