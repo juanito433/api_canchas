@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\MemberController;
 use App\Http\Controllers\Api\ModeController;
+use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\SportController;
 use App\Http\Controllers\Api\SportCourtController;
 use App\Http\Controllers\Api\ScheduleController;
@@ -98,3 +99,19 @@ Route::post('admin', [AdminController::class, 'store']);
 Route::put('admin/{id}',[AdminController::class, 'update']);
 #eliminar a un administrador 
 Route::delete('admin/{id}', [AdminController::class, 'destroy']);
+
+
+//Rutas de las resrvaciones
+#obtener todas las reservaciones
+Route::get('/reservation', [ReservationController::class, 'all']);
+#obtener una reservación por su id
+Route::get('/reservation/{id}', [ReservationController::class, 'show']);
+#obtener un reservación hecha por un miembro 
+Route::get('/reservation/{id}/member', [ReservationController::class, 'memberReservations']);
+#Regitrar una reservación
+Route::post('/reservation/{member}/{schedule}/registrer', [ReservationController::class, 'storage']);
+#Cancelar una reservación
+Route::put('/reservation/{id}', [ReservationController::class, 'cancelReservation']); 
+
+
+//Rutas de las penalizaciones 

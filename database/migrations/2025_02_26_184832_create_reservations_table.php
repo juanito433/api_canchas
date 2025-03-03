@@ -20,6 +20,7 @@ return new class extends Migration
             $table->timestamp('date');
             $table->string('teammates');
             $table->string('confirmation');
+            $table->string('status');
             $table->timestamps();
         });
     }

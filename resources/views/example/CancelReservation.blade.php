@@ -9,34 +9,38 @@
 </head>
 
 <body>
-    <center>
-        <h2>Información de la reservacion</h2>
-        <form action="">
 
-            <h4>folio: {{ $reservation->id }}</h4>
+    <h2>Información de la reservacion</h2>
+    <form action="">
 
-            <h4>{{ $member->name }} {{$member->lastname}}</h4>
+        <h4>Folio: {{ $reservation->id }}</h4>
 
-            <h4>{{ $schedule->days }}</h4>
+        <h4>Miembro: {{ $member->name }} {{ $member->lastname }}</h4>
 
-            <h4>Compañeros; </h4>
+        <p>Deporte: {{ $sport->name }}</p>
+        <p>Cancha reservada; Número - {{ $sportcourt->num_sportcourt }}</p>
+        <p>Modalidad: {{ $mode->name }}</p>
+        <p>Dia reservado; {{ $schedule->days }}</p>
+        <p>Fecha reservada; {{ $reservation->date }}</p>
+        <p>Compañeros; </p>
+        <div
+            style="
+        display: flex;
+        align-items: center;
+        justify-content: space-evenly;
+        flex-wrap: wrap;
+        width: 120px;
+        ">
             @foreach ($teammates as $teammate)
-                <div class="teammate-container">
-                    <h5>{{ $teammate->name }}</h5>
-                </div>
+                <h4>{{ $teammate->name }}, </h4>
             @endforeach
-            <h4>{{ $reservation->date }}</h4>
+        </div>
+        <h>Horario</h>
+        <p>{{ $schedule->start_time }} a {{ $schedule->end_time }}</p>
+        <p> Confimación: {{ $reservation->confirmation }}</p>
+        <p>Fecha de resersacion; {{ $reservation->created_at }}</p>
+    </form>
 
-            <h4>Horario</h4>
-            <h5>{{$schedule->start_time}}</h5>
-            <h5>{{$schedule->end_time}}</h5>
-
-
-            <h4>{{ $reservation->confirmation }}</h4>
-
-
-        </form>
-    </center>
 </body>
 
 </html>

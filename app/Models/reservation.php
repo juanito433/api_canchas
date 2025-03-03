@@ -16,6 +16,7 @@ class reservation extends Model
         'teammates',
         'date',
         'confirmation',
+        'status',
     ];
     
     //una reservacion solo puede tener una modalidad

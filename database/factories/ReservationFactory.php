@@ -25,6 +25,7 @@ class ReservationFactory extends Factory
             'teammates' =>json_encode( member::inRandomOrder()->limit(rand(1, 2))->pluck('id')->toArray()), 
             'date' => $this->faker->date,
             'confirmation' => $this->faker->randomElement(["Confirmado", "Pendiente"]),
+            'status' => $this->faker->randomElement(["cancelado", "Concluido"]),
         ];
     }
 }
