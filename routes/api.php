@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\MemberController;
 use App\Http\Controllers\Api\ModeController;
 use App\Http\Controllers\Api\SportController;
 use App\Http\Controllers\Api\SportCourtController;
+use App\Http\Controllers\Api\ScheduleController;
 use App\Models\sport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -28,8 +30,9 @@ Route::get('/sports/{sport}/courts', [SportCourtController::class, 'index']);
 
 Route::post('/sports/{sport}/courts', [SportCourtController::class, 'store']);
 
-
-Route::get('/canchas', [SportcourtController::class, 'getCanchas']);
+#todas las canchas
+Route::get('/sportcourt', [SportcourtController::class, 'all']);
+#actualizar imagen de las canchas
 Route::post('/sport/upload/{id}', [SportController::class, 'imageUpload']);
 
 
@@ -70,4 +73,28 @@ Route::delete('/modes/{id}', [ModeController::class, 'destroy']);
 
 
 
-//
+//rutas para los schedules
+//obtener todos los hoarios
+Route::get('/schedules', [ScheduleController::class, 'all']);
+//obtener un horario por el id
+Route::get('/schedules/{id}', [ScheduleController::class, 'index']);
+//registrar un horario
+Route::post('/schedules/{court}/court/{mode}/mode', [ScheduleController::class, 'storage']);
+#Actualizar un horario
+Route::put('/schedules/{court}/court/{mode}/mode/{id}', [ScheduleController::class, 'update']);
+#eliminar un horario
+Route::delete('schedules/{id}', [ScheduleController::class, 'destroy']);
+
+
+//Rutas para el administrador
+
+#obtener todos los administradores 
+Route::get('/admin', [AdminController::class, 'all']);
+#obtener el admin con su id
+Route::get('/admin/{id}', [AdminController::class, 'show']);
+#registrar a un admin
+Route::post('admin', [AdminController::class, 'store']);
+#actualizar un addministrador
+Route::put('admin/{id}',[AdminController::class, 'update']);
+#eliminar a un administrador 
+Route::delete('admin/{id}', [AdminController::class, 'destroy']);

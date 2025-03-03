@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Models\admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -9,6 +10,12 @@ use Illuminate\Support\Facades\Validator;
 
 class AdminController extends Controller
 {
+    #obtener todos los admisnitradores
+    public function all(){
+        return response()->json(admin::all(), 200);
+    }
+
+
     //obtener al administrador por su id
     public function show($id){
         $admin = admin::find($id);
@@ -68,6 +75,7 @@ class AdminController extends Controller
         }
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:255',
+            'lastname' => 'required',
             'email' => 'required|email',
             'phone' => 'required',
             'password' => 'required',
@@ -82,6 +90,7 @@ class AdminController extends Controller
         $admin->update(
             [
                 'name' => $request->name,
+                'lastname' => $request->lastname,
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'password' => bcrypt($request->password),
@@ -89,13 +98,15 @@ class AdminController extends Controller
         );
         return response()->json([
             'message' => 'Admin actualizado correctamente',
+            'admin' => $admin,
             'status' => 200,
         ], 200);
     }
-    //registrar un nuevo adminostrador
+    //registrar un nuevo administrador
     public function store(Request $request){
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:255',
+            'lastname' => 'required',
             'email' => 'required|email',
             'phone' => 'required',
             'password' => 'required',
@@ -109,6 +120,7 @@ class AdminController extends Controller
         }
         $admin=admin::create([
             'name' => $request->name,
+            'lastname' => $request->lastname,
             'email' => $request->email,
             'phone' => $request->phone,
             'password' => bcrypt($request->password),
@@ -118,6 +130,21 @@ class AdminController extends Controller
             'message' => 'Admin creado correctamente',
             'status' => 201,
         ], 201);
+    }
+
+    public function destroy(Request $request){
+        $admin = admin::find($request->id);
+        if(!$admin){
+            return response()->json([
+                'menssage'=> 'administrador no encontrado',
+                'status' => 404
+            ], 404);
+        }
+        $admin -> delete();
+        return response()->json([
+            'menssage' => 'Administrador eliminado de manera exitosa',
+            'status' => 200,
+        ], 200);
     }
 
 }

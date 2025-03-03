@@ -10,6 +10,13 @@ use Illuminate\Support\Facades\Validator;
 
 class SportCourtController extends Controller
 {
+
+    #listar todas las canchas
+    public function all (){
+        return response()->json(sportcourt::all(), 200);
+
+    }
+
     // Listar todas las canchas de un deporte específico
     public function index($sport_id)
     {

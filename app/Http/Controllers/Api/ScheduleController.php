@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Models\Reservation;
 use App\Models\Schedule;
 use App\Models\schedules;
@@ -97,6 +98,7 @@ class ScheduleController extends Controller
 
         return response()->json([
             'message' => 'Horario actualizado correctamente',
+            'schedule' => $schedule,
             'status' => 200,
         ], 200);
     }
