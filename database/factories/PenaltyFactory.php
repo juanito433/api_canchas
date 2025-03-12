@@ -24,7 +24,7 @@ class PenaltyFactory extends Factory
             'cause' => $this->faker->sentence(10),
             'penalty' => $this->faker->sentence(10),
             'date' => $this->faker->date(),
-
+            'expiration_date' =>$this->faker->date(),
         ];
     }
 }

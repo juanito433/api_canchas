@@ -19,6 +19,8 @@ class MemberFactory extends Factory
         return [
             'name' => $this->faker->firstName(),
             'lastname' => $this->faker->lastName(),
+            'lastname2' => $this->faker->lastName(),
+            'username' => $this->faker->name(),
             'email' => $this->faker->unique()->safeEmail(),
             'password' => $this->faker->password(),
             'phone' => $this->faker->phoneNumber(),

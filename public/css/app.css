@@ -1,0 +1,100 @@
+/* Estilos generales para el formulario */
+.form-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.form-container h2 {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #333;
+}
+
+/* Estilos para los inputs y selects */
+.form-group input,
+.form-group select,
+.form-group textarea {
+    border-radius: 5px;
+    border: 1px solid #ced4da;
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 1rem;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    outline: none;
+}
+
+/* Estilos para botones */
+.btn-submit {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    font-size: 1.1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn-submit:hover {
+    background-color: #218838;
+}
+
+/* Estilos para el modal */
+.modal-content {
+    padding: 30px;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    border-bottom: 1px solid #ced4da;
+    margin-bottom: 15px;
+}
+
+.modal-footer {
+    border-top: 1px solid #ced4da;
+    padding: 10px 0;
+}
+
+/* Estilos para la tabla de compañeros de juego */
+.teammates-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.teammates-table th,
+.teammates-table td {
+    padding: 12px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+
+.teammates-table th {
+    background-color: #f8f9fa;
+}
+
+/* Estilo para el ícono del calendario */
+.calendar-icon {
+    font-size: 1.2rem;
+    color: #007bff;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.calendar-icon:hover {
+    color: #0056b3;
+}

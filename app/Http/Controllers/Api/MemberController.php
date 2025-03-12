@@ -42,6 +42,8 @@ class MemberController extends Controller
             'name' => 'required|max:255',
             'email' => 'required|email',
             'lastname' => 'required',
+            'lastname2' => 'required',
+            'username' => 'required',
             'phone' => 'required',
             'password' => 'required',
         ]);
@@ -56,6 +58,8 @@ class MemberController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'lastname' => $request->lastname,
+            'lastname2' => $request->lastname2,
+            'username' => $request ->username,
             'phone' => $request->phone,
             'password' => bcrypt($request->password),
         ]);
@@ -128,6 +132,9 @@ class MemberController extends Controller
         }
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:255',
+            'lastname' => 'required',
+            'lastname2' => 'required',
+            'username' => 'required',
             'email' => 'required|email',
             'phone' => 'required',
             'password' => 'required',
@@ -141,6 +148,9 @@ class MemberController extends Controller
         }
         $member->update([
             'name' => $request->name,
+            'lastname' => $request->lastname,
+            'lastname2' => $request->lastname2,
+            'username' => $request ->username,  
             'email' => $request->email,
             'phone' => $request->phone,
             'password' => bcrypt($request->password),
@@ -150,5 +160,18 @@ class MemberController extends Controller
             'message' => 'Miembro actualizado correctamente',
             'status' => 200,
         ], 200);
+    }
+    public function showMember($id)
+    {
+        $member = Member::find($id);
+
+        if (!$member) {
+            return response()->json([
+                'message' => 'Miembro no encontrado',
+                'status' => 404,
+            ], 404);
+        }
+
+        return view('members.profile', compact('member')) ;
     }
 }

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\MemberController;
 use App\Http\Controllers\Api\ModeController;
+use App\Http\Controllers\Api\PenaltyController;
 use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\SportController;
 use App\Http\Controllers\Api\SportCourtController;
@@ -96,7 +97,7 @@ Route::get('/admin/{id}', [AdminController::class, 'show']);
 #registrar a un admin
 Route::post('admin', [AdminController::class, 'store']);
 #actualizar un addministrador
-Route::put('admin/{id}',[AdminController::class, 'update']);
+Route::put('admin/{id}', [AdminController::class, 'update']);
 #eliminar a un administrador 
 Route::delete('admin/{id}', [AdminController::class, 'destroy']);
 
@@ -111,7 +112,11 @@ Route::get('/reservation/{id}/member', [ReservationController::class, 'memberRes
 #Regitrar una reservación
 Route::post('/reservation/{member}/{schedule}/registrer', [ReservationController::class, 'storage']);
 #Cancelar una reservación
-Route::put('/reservation/{id}', [ReservationController::class, 'cancelReservation']); 
+Route::put('/reservation/{id}', [ReservationController::class, 'cancelReservation']);
 
 
 //Rutas de las penalizaciones 
+#obtener todas la penalizaciones 
+Route::get('/penalties', [PenaltyController::class, 'all']);
+#obtener una penalización por su id
+Route::get('/penalties/{id}', [PenaltyController::class, 'show']);

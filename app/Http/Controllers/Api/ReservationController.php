@@ -134,7 +134,7 @@ class ReservationController extends Controller
                 $schedule = schedules::find($reservation->schedule_id);
 
                 if ($schedule && $schedule->status === 'ocupado') {
-                    $schedule->status = 'disponible'; 
+                    $schedule->status = 'disponible';
                     $schedule->save();
                 }
 
@@ -180,14 +180,86 @@ class ReservationController extends Controller
 
         //obtener los datos de las canchas 
         $sportcourt = sportcourt::find($schedule->sportcourt_id);
-        
+
         //obtener los datos de la modalidad 
         $mode = mode::find($schedule->mode_id);
 
         //obtener datos del deporte
         $sport = sport::find($sportcourt->sport_id);
 
-        return view('example.CancelReservation', compact('reservation', 'teammates', 
-        'schedule', 'member', 'sportcourt', 'mode', 'sport'));
+        return view('example.insert-reservation', compact(
+            'reservation',
+            'teammates',
+            'schedule',
+            'member',
+            'sportcourt',
+            'mode',
+            'sport'
+        ));
+    }
+
+
+
+
+
+    public function registro(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'member_id' => 'required|exists:members,id',
+            'schedule_id' => 'required|exists:schedules,id',
+            'date' => 'required|date',
+            'teammates' => 'required|array|max:4',
+            'confirmation' => 'required|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Error al validar los datos ingresados',
+                'errors' => $validator->errors(),
+                'status' => 422,
+            ], 422);
+        }
+
+        try {
+            $reservation = DB::transaction(function () use ($request) {
+                // 🔒 **Bloqueo pesimista:** Verificar disponibilidad con SELECT ... FOR UPDATE
+                $schedule = schedules::where('id', $request->schedule_id)
+                    ->where('status', 'Libre')
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$schedule) {
+                    throw new \Exception('La cancha ya ha sido reservada recientemente.');
+                }
+
+                //  **Crear la reservación**
+                $reservation = Reservation::create([
+                    'member_id' => $request->member_id,
+                    'schedule_id' => $request->schedule_id,
+                    'date' => $request->date,
+                    'teammates' => json_encode($request->teammates),
+                    'confirmation' => $request->confirmation,
+                    'status' => 'Reservado',
+                ]);
+
+                //  **Actualizar el estado del horario a ocupado**
+                $schedule->status = 'Ocupado';
+                $schedule->save();
+
+                return $reservation;
+            });
+
+            return response()->json([
+                'message' => 'Reservación registrada correctamente',
+                'reservation' => $reservation,
+                'status' => 201,
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error al registrar la reservación',
+                'error' => $e->getMessage(),
+                'status' => 500,
+            ], 500);
+        }
     }
 }

@@ -23,5 +23,6 @@ class PenaltyController extends Controller
         }
         return response()->json($penalty, 200);
     }
+    
 
 }
