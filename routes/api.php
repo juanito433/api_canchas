@@ -12,13 +12,9 @@ use App\Models\sport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-/* Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
- */
-
 
 //Rutas para el controlador SportController 
+
 //Usadas por El admin y el de consulta por el miembro 
 Route::get('/sports', [SportController::class, 'index']);
 Route::get('/sports/{id}', [SportController::class, 'show']);
@@ -36,10 +32,6 @@ Route::post('/sports/{sport}/courts', [SportCourtController::class, 'store']);
 Route::get('/sportcourt', [SportcourtController::class, 'all']);
 #actualizar imagen de las canchas
 Route::post('/sport/upload/{id}', [SportController::class, 'imageUpload']);
-
-
-
-
 
 //Rutas para el controlador MemberController
 
@@ -89,7 +81,6 @@ Route::delete('schedules/{id}', [ScheduleController::class, 'destroy']);
 
 
 //Rutas para el administrador
-
 #obtener todos los administradores 
 Route::get('/admin', [AdminController::class, 'all']);
 #obtener el admin con su id
