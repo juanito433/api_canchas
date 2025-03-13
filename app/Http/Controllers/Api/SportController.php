@@ -41,7 +41,8 @@ class SportController extends Controller
     }
 
     // Crear un nuevo deporte
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:255',
             'description' => 'required',
@@ -69,9 +70,10 @@ class SportController extends Controller
         ], 201);
     }
     //actualizar un deporte
-    public function update(Request $request){
+    public function update(Request $request)
+    {
         $sport = Sport::find($request->id);
-        if(!$sport){
+        if (!$sport) {
             return response()->json([
                 'message' => 'Deporte no encontrado',
                 'status' => 404,
@@ -102,9 +104,10 @@ class SportController extends Controller
         ], 200);
     }
     //eliminar un deporte
-    public function destroy(Request $request){
+    public function destroy(Request $request)
+    {
         $sport = Sport::find($request->id);
-        if(!$sport){
+        if (!$sport) {
             return response()->json([
                 'message' => 'Deporte no encontrado',
                 'status' => 404,
@@ -116,5 +119,29 @@ class SportController extends Controller
             'status' => 200,
         ], 200);
     }
-    
+    public function imageUpload(Request $request, $id)
+    { {
+            $sport = sport::find($id);
+
+            if (!$sport) {
+                return response()->json(['message' => 'Deporte no encontrado'], 404);
+            }
+
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                $path = $image->store('sports_images', 'public');
+
+                // Guardar ruta en la BD
+                $sport->image = url("storage/$path");
+                $sport->save();
+
+                return response()->json([
+                    'message' => 'Imagen subida correctamente',
+                    'image_url' => $sport->image
+                ], 200);
+            }
+
+            return response()->json(['message' => 'No se recibió una imagen'], 400);
+        }
+    }
 }

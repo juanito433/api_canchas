@@ -42,8 +42,8 @@ class MemberController extends Controller
             'name' => 'required|max:255',
             'email' => 'required|email',
             'lastname' => 'required',
-            'lastname2' => 'required',
-            'username' => 'required',
+           /*  'lastname2' => 'required',
+            'username' => 'required', */
             'phone' => 'required',
             'password' => 'required',
         ]);
@@ -58,8 +58,8 @@ class MemberController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'lastname' => $request->lastname,
-            'lastname2' => $request->lastname2,
-            'username' => $request ->username,
+            /* 'lastname2' => $request->lastname2,
+            'username' => $request ->username, */
             'phone' => $request->phone,
             'password' => bcrypt($request->password),
         ]);
