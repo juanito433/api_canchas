@@ -36,5 +36,6 @@ class schedules extends Model
     {
         return $this->hasMany(reservation::class);
     }
+    
 
 }

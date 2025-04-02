@@ -18,7 +18,24 @@ class ReservationController extends Controller
     //Función para visualizar todas las reservaciones
     public function all()
     {
-        $reservations = reservation::all();
+        $reservations = Reservation::with([
+            'member',
+            'schedule.sportcourt.sport',
+            'schedule.mode',
+        ])->get();
+
+        $reservations->each(function ($reservation) {
+            $teammateIds = json_decode($reservation->teammates, true);
+
+            if (is_array($teammateIds) && count($teammateIds) > 0) {
+                // Consultar la tabla members para obtener los datos de los teammates
+                $teammates = Member::whereIn('id', $teammateIds)->get();
+                $reservation->teammates_data = $teammates;
+            } else {
+                $reservation->teammates_data = [];
+            }
+        });
+
         return response()->json($reservations);
     }
 
@@ -29,19 +46,47 @@ class ReservationController extends Controller
         return response()->json($reservation);
     }
 
-    //Función para visualizar las reservaciones de un miembro
     public function memberReservations($id)
     {
-        $reservations = Reservation::where('member_id', $id)->get();
+        try {
+            $reservations = Reservation::where('member_id', $id)->get();
 
-        if ($reservations->isEmpty()) {
+            if ($reservations->isEmpty()) {
+                return response()->json([
+                    'mensaje' => 'Este miembro no ha realizado alguna reservación',
+                    'status' => 404,
+                ], 404);
+            }
+
+            $allTeammates = [];
+
+            foreach ($reservations as $reservation) {
+                if (!empty($reservation->teammates) && is_string($reservation->teammates)) {
+                    // Reemplazamos las llaves { } por corchetes [ ]
+                    $formatted_teammates = str_replace(['{', '}'], ['[', ']'], $reservation->teammates);
+
+                    // Convertimos la cadena en un array de IDs
+                    $teammates_id = json_decode($formatted_teammates, true);
+
+                    // Validamos que $teammates_id sea un array antes de hacer la consulta
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($teammates_id) && !empty($teammates_id)) {
+                        $teammates = Member::whereIn('id', $teammates_id)->pluck('name'); // Obtener solo nombres
+                        $allTeammates[$reservation->id] = $teammates;
+                    } else {
+                        $allTeammates[$reservation->id] = [];
+                    }
+                } else {
+                    $allTeammates[$reservation->id] = [];
+                }
+            }
+
             return response()->json([
-                'mensaje' => 'Este miembro no ha realizado alguna reservación',
-                'status' => 404,
-            ], 404);
+                'reservations' => $reservations,
+                'teammates' => $allTeammates,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
         }
-
-        return response()->json($reservations);
     }
 
     //Realizar una reservacion de una cancha
@@ -197,10 +242,6 @@ class ReservationController extends Controller
             'sport'
         ));
     }
-
-
-
-
 
     public function registro(Request $request)
     {

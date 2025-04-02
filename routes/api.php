@@ -78,6 +78,9 @@ Route::post('/schedules/{court}/court/{mode}/mode', [ScheduleController::class, 
 Route::put('/schedules/{court}/court/{mode}/mode/{id}', [ScheduleController::class, 'update']);
 #eliminar un horario
 Route::delete('schedules/{id}', [ScheduleController::class, 'destroy']);
+//Hoario en fecha especifica
+
+Route::get('/schedule/{date}', [ScheduleController::class, 'getSchedulesByDate']);
 
 
 //Rutas para el administrador

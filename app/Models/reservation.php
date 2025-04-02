@@ -37,7 +37,7 @@ class reservation extends Model
 
     //Relación con schedules
     //una reservacion solo puede tener un horario
-    public function schedules()
+    public function schedule()
     {
         return $this->belongsTo(schedules::class);
     }

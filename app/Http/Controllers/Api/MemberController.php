@@ -42,7 +42,9 @@ class MemberController extends Controller
             'name' => 'required|max:255',
             'email' => 'required|email',
             'lastname' => 'required',
-           /*  'lastname2' => 'required',
+            'lastname2' => 'required',
+            'username' => 'required',
+            /*  
             'username' => 'required', */
             'phone' => 'required',
             'password' => 'required',
@@ -58,7 +60,9 @@ class MemberController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'lastname' => $request->lastname,
-            /* 'lastname2' => $request->lastname2,
+            'lastname2' => $request->lastname2,
+            'username' => $request -> username,
+            /* 
             'username' => $request ->username, */
             'phone' => $request->phone,
             'password' => bcrypt($request->password),
@@ -100,12 +104,16 @@ class MemberController extends Controller
     }
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        if ($request->user()) {
+            $request->user()->tokens()->delete();
+        }
+
         return response()->json([
             'message' => 'Sesión cerrada correctamente',
             'status' => 200,
         ], 200);
     }
+
     public function destroy($id)
     {
         $member = Member::find($id);
@@ -150,7 +158,7 @@ class MemberController extends Controller
             'name' => $request->name,
             'lastname' => $request->lastname,
             'lastname2' => $request->lastname2,
-            'username' => $request ->username,  
+            'username' => $request->username,
             'email' => $request->email,
             'phone' => $request->phone,
             'password' => bcrypt($request->password),
@@ -172,6 +180,6 @@ class MemberController extends Controller
             ], 404);
         }
 
-        return view('members.profile', compact('member')) ;
+        return view('members.profile', compact('member'));
     }
 }

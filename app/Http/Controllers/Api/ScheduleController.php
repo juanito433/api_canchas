@@ -7,12 +7,13 @@ use App\Models\Reservation;
 use App\Models\Schedule;
 use App\Models\schedules;
 use App\Models\Sport;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class ScheduleController extends Controller
 {
-    // Visualizar todos los horarios
+    // Obtener todos los horarios
     public function all()
     {
         return response()->json(schedules::all(), 200);
@@ -56,7 +57,7 @@ class ScheduleController extends Controller
             'mode_id' => $request->mode_id,
             'start_time' => $request->start_time,
             'end_time' => $request->end_time,
-            'status' => 'Disponible', 
+            'status' => 'Disponible',
         ]);
 
         return response()->json([
@@ -119,5 +120,42 @@ class ScheduleController extends Controller
             'message' => 'Horario eliminado exitosamente',
             'status' => 200,
         ], 200);
+    }
+    public function getSchedulesByDate($date)
+    {
+        // Convertir la fecha en un objeto Carbon
+        $carbonDate = Carbon::parse($date);
+
+        // Obtener el nombre del día en inglés
+        $dayName = $carbonDate->format('l');
+
+        // Mapeo de los días de la semana al formato de la base de datos (ajustar si es necesario)
+        $daysMap = [
+            'Monday'    => 'Lunes',
+            'Tuesday'   => 'Martes',
+            'Wednesday' => 'Miércoles',
+            'Thursday'  => 'Jueves',
+            'Friday'    => 'Viernes',
+            'Saturday'  => 'Sábado',
+            'Sunday'    => 'Domingo',
+        ];
+
+        // Obtener el día en español según el mapeo
+        $dayInDb = $daysMap[$dayName] ?? null;
+
+        // Si el día no se encuentra en el mapeo, retornar error
+        if (!$dayInDb) {
+            return response()->json(['message' => 'Día no válido'], 400);
+        }
+
+        // Consultar los horarios disponibles para ese día
+        $schedules = schedules::where('days', $dayInDb)->get();
+
+        // Retornar la respuesta en JSON
+        return response()->json([
+            'date' => $date,
+            'day' => $dayInDb,
+            'schedules' => $schedules
+        ]);
     }
 }

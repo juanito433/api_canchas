@@ -46,8 +46,8 @@ class SportController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:255',
             'description' => 'required',
-            'image' => 'required|image',
-        ]);
+/*             'image' => 'required|image',
+ */        ]);
 
         if ($validator->fails()) {
             return response()->json([
@@ -57,11 +57,21 @@ class SportController extends Controller
             ], 400);
         }
 
+        /* if (!$request->hasFile('image')) {
+            return response()->json([
+                'message' => 'No se recibió ninguna imagen',
+                'status' => 400,
+            ], 400);
+        } */
+
+       /*  $imagePath = $request->file('image')->store('sports', 'public');
+        $imageUrl = Storage::url($imagePath); */
+
         $sport = Sport::create([
             'name' => $request->name,
             'description' => $request->description,
-            'image' => $request->file('image')->store('sports', 'public'),
-        ]);
+/*             'image' => $imageUrl,
+ */        ]);
 
         return response()->json([
             'sport' => $sport,
@@ -69,6 +79,8 @@ class SportController extends Controller
             'status' => 201,
         ], 201);
     }
+
+    
     //actualizar un deporte
     public function update(Request $request)
     {
@@ -82,7 +94,8 @@ class SportController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:255',
             'description' => 'required',
-            'image' => 'required|image',
+            /*             'image' => 'required|image',
+ */
         ]);
         if ($validator->fails()) {
             return response()->json([
@@ -91,11 +104,14 @@ class SportController extends Controller
                 'status' => 400,
             ], 400);
         }
+        /*  $imagePath = $request->file('image')->store('sports', 'public');
+        $imageUrl = Storage::url($imagePath); // Obtener la URL pública */
         $sport->update(
             [
                 'name' => $request->name,
                 'description' => $request->description,
-                'image' => $request->file('image')->store('sports', 'public'),
+                /*                 'image' => $imageUrl, // Guardar la nueva URL pública
+ */
             ]
         );
         return response()->json([
