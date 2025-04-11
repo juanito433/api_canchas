@@ -58,6 +58,8 @@ Route::get('/modes', [ModeController::class, 'all']);
 Route::get('/modes/{id}', [ModeController::class, 'show']);
 //Ruta para visualizar todas las modalidades de una cancha
 Route::get('/courts/{court}/modes', [ModeController::class, 'index']);
+//Ruta para visualizar todas las modalidades de un deporte
+Route::get('/sports/mode/{id}', [ModeController::class, 'SportMode']);
 //Ruta para registrar una modalidad
 Route::post('/courts/{court}/modes', [ModeController::class, 'store']);
 //Ruta para actualizar una modalidad
@@ -79,8 +81,9 @@ Route::put('/schedules/{court}/court/{mode}/mode/{id}', [ScheduleController::cla
 #eliminar un horario
 Route::delete('schedules/{id}', [ScheduleController::class, 'destroy']);
 //Hoario en fecha especifica
-
 Route::get('/schedule/{date}', [ScheduleController::class, 'getSchedulesByDate']);
+//ruta de horarios por deporte
+Route::get('/schedule/sports/{id}', [ScheduleController::class, 'getSchedulesBySport']);
 
 
 //Rutas para el administrador
@@ -107,10 +110,15 @@ Route::get('/reservation/{id}/member', [ReservationController::class, 'memberRes
 Route::post('/reservation/{member}/{schedule}/registrer', [ReservationController::class, 'storage']);
 #Cancelar una reservación
 Route::put('/reservation/{id}', [ReservationController::class, 'cancelReservation']);
-
+#Fitrar reservación por deporte
+Route::get('/reservation/sports/{id}', [ReservationController::class, 'index']);
 
 //Rutas de las penalizaciones 
 #obtener todas la penalizaciones 
 Route::get('/penalties', [PenaltyController::class, 'all']);
 #obtener una penalización por su id
 Route::get('/penalties/{id}', [PenaltyController::class, 'show']);
+
+
+//Ruta mostrar los datos en elformulario de reserva
+Route::get('/reservation/{id}/form', [ReservationController::class, 'formReservations']);

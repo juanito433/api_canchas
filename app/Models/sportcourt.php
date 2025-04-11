@@ -7,32 +7,25 @@ use Illuminate\Database\Eloquent\Model;
 
 class sportcourt extends Model
 {
-    /** @use HasFactory<\Database\Factories\SportcourtFactory> */
     use HasFactory;
-    protected $fillable=[
+
+    protected $fillable = [
         'sport_id',
-        'num_sportcourt'
+        'num_sportcourt',
     ];
 
-
-    // Relación inversa: muchas canchas pertenecen a un deporte
     public function sport()
     {
         return $this->belongsTo(Sport::class);
     }
-    public function courts()
-    {
-        return $this->hasMany(mode::class);
-    }
 
-
-    //Relacion con schedules
-    //Una cancha puede tener muchos horarios
     public function schedules()
     {
         return $this->hasMany(schedules::class);
     }
-    
+
+    public function courts()
+    {
+        return $this->hasMany(mode::class); // Valida que esto sí lo necesites
+    }
 }
-
-

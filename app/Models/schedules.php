@@ -23,7 +23,12 @@ class schedules extends Model
     {
         return $this->belongsTo(sportcourt::class);
     }
-    //Relacion con mode
+    /* una cancha tienen muchos horarios */
+    public function sportCourts()
+    {
+        return $this->hasMany(sportcourt::class);
+    }
+    
     //Un horario pertenece a muchos modos
     public function mode()
     {

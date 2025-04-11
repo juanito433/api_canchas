@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class sport extends Model
 {
-    /** @use HasFactory<\Database\Factories\SportFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -16,8 +15,6 @@ class sport extends Model
         'image',
     ];
 
-
-    // Relación uno a muchos con SportCourt
     public function sportCourts()
     {
         return $this->hasMany(sportcourt::class);

@@ -130,7 +130,7 @@ class ReservationController extends Controller
                     ], 409);
                 }
 
-                // **Crear la reservación**
+                // Crear la reservación
                 $reservation = Reservation::create([
                     'member_id' => $request->member_id,
                     'schedule_id' => $request->schedule_id,
@@ -140,7 +140,7 @@ class ReservationController extends Controller
                     'status' => $request->status,
                 ]);
 
-                // **Actualizar el estado del horario**
+                // Actualizar el estado del horario
                 $schedule->status = 'ocupado';
                 $schedule->save();
 
@@ -302,5 +302,20 @@ class ReservationController extends Controller
                 'status' => 500,
             ], 500);
         }
+    }
+    public function formReservations(Request $request) {
+        $member = member::find($request ->id);
+        $sports = sport::all();
+        $sportsCourts = sportcourt::all();
+        $modes = mode::all();
+        $schedules = schedules::all();
+
+        return response()->json([
+            'member' => $member,
+            'sports' => $sports,
+            'sportsCourts' => $sportsCourts,
+            'modes' => $modes,
+            'schedules' => $schedules,
+        ]);
     }
 }

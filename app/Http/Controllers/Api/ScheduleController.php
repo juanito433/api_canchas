@@ -158,4 +158,17 @@ class ScheduleController extends Controller
             'schedules' => $schedules
         ]);
     }
+    public function getSchedulesBySport($sportId)
+    {
+        // Obtener los horarios que tienen el deporte especificado
+        $schedules = schedules::where('sportcourt_id', $sportId)->get();
+
+        // Retornar la respuesta en JSON
+        return response()->json([
+            'sport_id' => $sportId,
+            'schedules' => $schedules
+        ]);
+        
+    }
+
 }
