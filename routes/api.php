@@ -59,7 +59,7 @@ Route::get('/modes/{id}', [ModeController::class, 'show']);
 //Ruta para visualizar todas las modalidades de una cancha
 Route::get('/courts/{court}/modes', [ModeController::class, 'index']);
 //Ruta para visualizar todas las modalidades de un deporte
-Route::get('/sports/mode/{id}', [ModeController::class, 'SportMode']);
+Route::get('/sports/mode/{id}', [ModeController::class, 'formResrevations']);
 //Ruta para registrar una modalidad
 Route::post('/courts/{court}/modes', [ModeController::class, 'store']);
 //Ruta para actualizar una modalidad
@@ -122,3 +122,6 @@ Route::get('/penalties/{id}', [PenaltyController::class, 'show']);
 
 //Ruta mostrar los datos en elformulario de reserva
 Route::get('/reservation/{id}/form', [ReservationController::class, 'formReservations']);
+
+//Ruta para obtener los datos para el formulario de las reservaciones; 
+Route::get('/reservations/options/{id}', [ReservationController::class, 'getReservationOptions']);

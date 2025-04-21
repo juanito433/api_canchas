@@ -303,8 +303,9 @@ class ReservationController extends Controller
             ], 500);
         }
     }
-    public function formReservations(Request $request) {
-        $member = member::find($request ->id);
+    public function formReservations(Request $request)
+    {
+        $member = member::find($request->id);
         $sports = sport::all();
         $sportsCourts = sportcourt::all();
         $modes = mode::all();
@@ -317,5 +318,143 @@ class ReservationController extends Controller
             'modes' => $modes,
             'schedules' => $schedules,
         ]);
+    }
+    public function getReservationOptions(Request $request, $id)
+    {
+        $sport = sport::find($id);
+
+        if (!$sport) {
+            return response()->json([
+                'message' => 'Deporte no encontrado',
+                'status' => 404,
+            ]);
+        }
+
+        $courts = sportcourt::where('sport_id', $sport->id)->get();
+        if ($courts->isEmpty()) {
+            return response()->json([
+                'message' => 'No hay canchas registradas para este deporte',
+                'status' => 404,
+            ]);
+        }
+
+        $courtIds = $courts->pluck('id');
+
+        try {
+            $schedules = schedules::whereIn('sportcourt_id', $courtIds)
+                ->where('status', 'Libre')
+                ->get();
+
+            $availableDaysWithSchedules = $schedules
+                ->groupBy('days')
+                ->map(function ($dayGroup, $day) {
+                    return [
+                        'day' => $day,
+                        'schedules' => $dayGroup->map(function ($schedule) {
+                            return [
+                                'id' => $schedule->id,
+                                'start_time' => $schedule->start_time,
+                                'end_time' => $schedule->end_time,
+                                'court_id' => $schedule->sportcourt_id,
+                                'mode_id' => $schedule->mode_id,
+                            ];
+                        })->values()
+                    ];
+                })
+                ->values();
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error al obtener los días disponibles con horarios',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+
+        // Si se seleccionó un día
+        if ($request->has('days')) {
+            $selectedDay = trim(strtolower($request->input('days')));
+
+            $schedules = schedules::whereIn('sportcourt_id', $courtIds)
+                ->whereRaw('LOWER(TRIM(days)) = ?', [$selectedDay])
+                ->where('status', 'Libre')
+                ->get();
+
+            if ($schedules->isEmpty()) {
+                return response()->json([
+                    'status' => 200,
+                    'sport' => $sport,
+                    'courts' => $courts,
+                    'courtIds' => $courtIds,
+                    'day_selected' => ucfirst($selectedDay),
+                    'message' => 'No hay horarios cargados o disponibles para este día',
+                ]);
+            }
+
+            $schedulesAvailable = $schedules->map(function ($schedule) {
+                $isReserved = Reservation::where('schedule_id', $schedule->id)->exists();
+                return [
+                    'id' => $schedule->id,
+                    'day' => $schedule->days,
+                    'start_time' => $schedule->start_time,
+                    'end_time' => $schedule->end_time,
+                    'court_id' => $schedule->sportcourt_id,
+                    'mode_id' => $schedule->mode_id,
+                    'available' => !$isReserved
+                ];
+            });
+
+            $modeIds = $schedules->pluck('mode_id')->unique();
+            $modes = mode::whereIn('id', $modeIds)->get();
+
+            return response()->json([
+                'status' => 200,
+                'sport' => $sport,
+                'day_selected' => ucfirst($selectedDay),
+                'schedules' => $schedulesAvailable,
+                'modes' => $modes,
+                'courts' => $courts,
+            ]);
+        }
+        //cuando se ñeñeciones el modo de juego se asignara la cancha 
+        if ($request->has('mode_id')) {
+            $modeId = $request->input('mode_id');
+            $schedule = schedules::whereIn('sportcourt_id', $courtIds)
+                ->where('mode_id', $modeId)
+                ->where('status', 'Libre')
+                ->get();
+
+            if ($schedule->isEmpty()) {
+                return response()->json([
+                    'status' => 200,
+                    'sport' => $sport,
+                    'courts' => $courts,
+                    'courtIds' => $courtIds,
+                    'message' => 'No hay horarios cargados o disponibles para este modo de juego',
+                ]);
+            }
+        }
+
+        //buscar la cancha asignada con el id de la cancha conseguida y obtendremos e nuemro de canca
+        $courtId = $schedule->pluck('sportcourt_id')->unique();
+        $court = sportcourt::whereIn('id', $courtId)->get();
+        if ($court->isEmpty()) {
+            return response()->json([
+                'status' => 200,
+                'sport' => $sport,
+                'courts' => $courts,
+                'courtIds' => $courtIds,
+                'message' => 'No hay canchas disponibles para este modo de juego',
+            ]);
+        }
+
+
+
+        return response()->json([
+            'status' => 200,
+            'sport' => $sport,
+            'courts' => $court,
+            'courtIds' => $courtIds,
+            'available_days' => $availableDaysWithSchedules,
+        ]);
+        
     }
 }

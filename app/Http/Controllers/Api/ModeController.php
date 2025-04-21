@@ -33,7 +33,7 @@ class ModeController extends Controller
         return response()->json($sportcourt->courts, 200);
     }
     /* Todas las modalidades de un deporte*/
-    public function SportMode($id)
+    public function formResrevations($id)
     {
 
         $sport = Sport::find($id);
