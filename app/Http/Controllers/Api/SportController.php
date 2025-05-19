@@ -46,8 +46,8 @@ class SportController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:255',
             'description' => 'required',
-/*             'image' => 'required|image',
- */        ]);
+            'image' => 'required|image|max:10240', // Validación adicional para el tamaño
+        ]);
 
         if ($validator->fails()) {
             return response()->json([
@@ -57,30 +57,32 @@ class SportController extends Controller
             ], 400);
         }
 
-        /* if (!$request->hasFile('image')) {
+        try {
+            // Almacenamos la imagen en el directorio 'sports' dentro de 'public'
+            $imagePath = $request->file('image')->store('sports', 'public');
+            $imageUrl = Storage::url($imagePath);
+
+            // Creamos el registro de 'sport' en la base de datos
+            $sport = Sport::create([
+                'name' => $request->name,
+                'description' => $request->description,
+                'image' => $imageUrl,
+            ]);
+
             return response()->json([
-                'message' => 'No se recibió ninguna imagen',
-                'status' => 400,
-            ], 400);
-        } */
-
-       /*  $imagePath = $request->file('image')->store('sports', 'public');
-        $imageUrl = Storage::url($imagePath); */
-
-        $sport = Sport::create([
-            'name' => $request->name,
-            'description' => $request->description,
-/*             'image' => $imageUrl,
- */        ]);
-
-        return response()->json([
-            'sport' => $sport,
-            'message' => 'Deporte creado correctamente',
-            'status' => 201,
-        ], 201);
+                'sport' => $sport,
+                'message' => 'Deporte creado correctamente',
+                'status' => 201,
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error al procesar la imagen o crear el deporte.',
+                'error' => $e->getMessage(),
+                'status' => 500,
+            ], 500);
+        }
     }
 
-    
     //actualizar un deporte
     public function update(Request $request)
     {

@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\member;
+use App\Models\mode;
 use App\Models\Reservation;
 use App\Models\Schedule;
 use App\Models\schedules;
 use App\Models\Sport;
+use App\Models\sportcourt;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -168,7 +171,26 @@ class ScheduleController extends Controller
             'sport_id' => $sportId,
             'schedules' => $schedules
         ]);
-        
     }
 
+    public function scheduleAll(Request $request)
+    {
+        $schedule = schedules::find($request->id);
+        if (!$schedule) {
+            return response()->json([
+                'message' => 'Horario no encontrado',
+                'status' => 404,
+            ], 404);
+        }
+        $court = sportcourt::find($schedule->sportcourt_id);
+        $sport = sport::find($court->sport_id);
+        $mode = mode::find($schedule->mode_id);
+
+        return response()->json([
+            'schedule' => $schedule,
+            'num_court' => $court->num_sportcourt,
+            'sport' => $sport->name,
+            'mode' => $mode->name,
+        ]);
+    }
 }

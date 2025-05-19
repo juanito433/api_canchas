@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\HistoryController;
 use App\Http\Controllers\Api\MemberController;
 use App\Http\Controllers\Api\ModeController;
 use App\Http\Controllers\Api\PenaltyController;
@@ -125,3 +126,17 @@ Route::get('/reservation/{id}/form', [ReservationController::class, 'formReserva
 
 //Ruta para obtener los datos para el formulario de las reservaciones; 
 Route::get('/reservations/options/{id}', [ReservationController::class, 'getReservationOptions']);
+
+
+
+
+
+
+/* Historial */
+
+//Ruta para obtener el historial de un miembro
+Route::get('/history/{id}', [HistoryController::class, 'show']);
+
+
+
+Route::get('/allschedule/{id}', [ScheduleController::class, 'scheduleAll']);

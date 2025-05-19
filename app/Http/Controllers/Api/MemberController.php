@@ -23,9 +23,9 @@ class MemberController extends Controller
 
         return response()->json($members, 200);
     }
-    public function show($id)
+    public function show(Request $request)
     {
-        $member = Member::find($id);
+        $member = Member::find($request->id);
 
         if (!$member) {
             return response()->json([
@@ -34,8 +34,13 @@ class MemberController extends Controller
             ], 404);
         }
 
-        return response()->json($member, 200);
+        return response()->json([
+            ...$member->toArray(),
+            'photo_url' => $member->photo_url ?? null,
+        ], 200);
     }
+
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -61,7 +66,7 @@ class MemberController extends Controller
             'email' => $request->email,
             'lastname' => $request->lastname,
             'lastname2' => $request->lastname2,
-            'username' => $request -> username,
+            'username' => $request->username,
             /* 
             'username' => $request ->username, */
             'phone' => $request->phone,
