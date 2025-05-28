@@ -6,29 +6,28 @@ use App\Http\Controllers\Api\MemberController;
 use App\Http\Controllers\Api\ModeController;
 use App\Http\Controllers\Api\PenaltyController;
 use App\Http\Controllers\Api\ReservationController;
+use App\Http\Controllers\Api\SabanaController;
 use App\Http\Controllers\Api\SportController;
 use App\Http\Controllers\Api\SportCourtController;
 use App\Http\Controllers\Api\ScheduleController;
+use App\Http\Controllers\Api\suggestionsController;
 use App\Models\sport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 
 //Rutas para el controlador SportController 
-
 //Usadas por El admin y el de consulta por el miembro 
 Route::get('/sports', [SportController::class, 'index']);
 Route::get('/sports/{id}', [SportController::class, 'show']);
 Route::post('/sports', [SportController::class, 'store']);
 Route::put('/sports/{id}', [SportController::class, 'update']);
 Route::delete('/sports/{id}', [SportController::class, 'destroy']);
-
 //Rutas para el Controlador SportCourtController
 //Administradas por el admin y consultadas por los miembros
 Route::get('/sports/{sport}/courts', [SportCourtController::class, 'index']);
 
 Route::post('/sports/{sport}/courts', [SportCourtController::class, 'store']);
-
 #todas las canchas
 Route::get('/sportcourt', [SportcourtController::class, 'all']);
 #actualizar imagen de las canchas
@@ -140,3 +139,17 @@ Route::get('/history/{id}', [HistoryController::class, 'show']);
 
 
 Route::get('/allschedule/{id}', [ScheduleController::class, 'scheduleAll']);
+
+
+//Ruta para obtener la sabana de un deporte
+Route::get('/sabana/{id}', [SabanaController::class, 'sabana']);
+
+
+//Ruta para crear una sugerencia
+Route::post('/suggestions', [suggestionsController::class, 'createSuggestion']);
+//Ruta para obtener todas las sugerencias
+Route::get('/suggestions', [suggestionsController::class, 'getAllSuggestions']);
+//Ruta para obtener las sugerencias de un miembro
+Route::get('/suggestions/member/{id}', [suggestionsController::class, 'getSuggestionByMember']);
+//Ruta para obtener una sugerencia por el issuse
+Route::get('/suggestions/issuse/{issuse}', [suggestionsController::class, 'getSuggestionByIssuse']);

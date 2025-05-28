@@ -50,6 +50,8 @@ class HistoryController extends Controller
                     'id' => $reservation->id,
                     'member_id' => $reservation->member_id,
                     'schedule_id' => $reservation->schedule_id,
+                    'start_time' => $schedule->start_time,
+                    'end_time' => $schedule->end_time,
                     'num_court' => $court->num_sportcourt,
                     'sport' => $sport->name,
                     'mode' => $mode->name,

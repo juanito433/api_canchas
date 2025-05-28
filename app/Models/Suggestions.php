@@ -9,4 +9,10 @@ class Suggestions extends Model
 {
     /** @use HasFactory<\Database\Factories\SuggestionsFactory> */
     use HasFactory;
+
+    protected $fillable = [
+        'issuse',
+        'message',
+        'member_id',
+    ];
 }
