@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\SportController;
 use App\Http\Controllers\Api\SportCourtController;
 use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\suggestionsController;
+use App\Http\Controllers\Api\UserController;
 use App\Models\sport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -153,3 +154,18 @@ Route::get('/suggestions', [suggestionsController::class, 'getAllSuggestions']);
 Route::get('/suggestions/member/{id}', [suggestionsController::class, 'getSuggestionByMember']);
 //Ruta para obtener una sugerencia por el issuse
 Route::get('/suggestions/issuse/{issuse}', [suggestionsController::class, 'getSuggestionByIssuse']);
+
+
+
+
+
+
+//Rutas para los usuarios 
+Route::get('/users', [UserController::class, 'index']);
+Route::get('/users/{id}', [UserController::class, 'show']);
+Route::post('/user', [UserController::class, 'store']);
+Route::put('/user/{id}', [UserController::class, 'update']);
+
+Route::delete('/user/{id}', [UserController::class, 'destroy']);
+//Ruta para loguear un usuario
+Route::post('/user/login', [UserController::class, 'login']);

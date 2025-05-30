@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('lastname2');
             $table->string('username');
             $table->string('phone');
+            $table->string('role')->default('member');
             $table->binary('photo_url')->nullable();
             $table->rememberToken();
             $table->timestamps();
