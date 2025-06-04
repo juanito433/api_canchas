@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Models\sport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
 
 
 //Rutas para el controlador SportController 
@@ -169,3 +170,5 @@ Route::put('/user/{id}', [UserController::class, 'update']);
 Route::delete('/user/{id}', [UserController::class, 'destroy']);
 //Ruta para loguear un usuario
 Route::post('/user/login', [UserController::class, 'login']);
+//Ruta para cerrar sesión de un usuario
+Route::middleware('auth:sanctum')->post('/logout', [UserController::class, 'logout']);
