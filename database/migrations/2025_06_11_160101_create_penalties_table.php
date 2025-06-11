@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('penalties', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user:id');
-            $table->foreign('member_id')->references('id')->on('users')->onDelete('cascade');
+            $table->unsignedBigInteger('user_id');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->string('cause');
             $table->date('date');
             $table->date('expiration_date');
