@@ -5,16 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class suggestions extends Model
+class Report extends Model
 {
-    /** @use HasFactory<\Database\Factories\SuggestionsFactory> */
+    /** @use HasFactory<\Database\Factories\ReportFactory> */
     use HasFactory;
     protected $fillable = [
-        'issuse',
-        'message',
         'user_id',
+        'pdf_url',
     ];
-    //Una sugerencia solo puede tener un usuario
+    // A report belongs to a user
     public function user()
     {
         return $this->belongsTo(User::class);

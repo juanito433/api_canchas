@@ -5,16 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class suggestions extends Model
+class penalty extends Model
 {
-    /** @use HasFactory<\Database\Factories\SuggestionsFactory> */
+    /** @use HasFactory<\Database\Factories\PenaltyFactory> */
     use HasFactory;
     protected $fillable = [
-        'issuse',
-        'message',
+        'cause',
+        'penalty',
+        'date',
         'user_id',
     ];
-    //Una sugerencia solo puede tener un usuario
+
+    //Una penalización solo puede tener un miembro
     public function user()
     {
         return $this->belongsTo(User::class);

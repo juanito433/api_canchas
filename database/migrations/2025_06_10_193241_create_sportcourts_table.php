@@ -13,6 +13,9 @@ return new class extends Migration
     {
         Schema::create('sportcourts', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('sport_id');
+            $table->foreign('sport_id')->references('id')->on('sports')->onDelete('cascade');
+            $table->integer('num_sportcourt');
             $table->timestamps();
         });
     }

@@ -11,11 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('sports', function (Blueprint $table) {
+        Schema::create('penalties', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('description')->nullable();
-            $table->string('image')->nullable();
+            $table->unsignedBigInteger('user:id');
+            $table->foreign('member_id')->references('id')->on('users')->onDelete('cascade');
+            $table->string('cause');
+            $table->date('date');
+            $table->date('expiration_date');
+            $table->string('penalty');
             $table->timestamps();
         });
     }
@@ -25,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('sports');
+        Schema::dropIfExists('penalties');
     }
 };

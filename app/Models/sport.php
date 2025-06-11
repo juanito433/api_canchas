@@ -9,4 +9,14 @@ class sport extends Model
 {
     /** @use HasFactory<\Database\Factories\SportFactory> */
     use HasFactory;
+    protected $fillable = [
+        'name',
+        'description',
+        'image',
+    ];
+
+    public function sportCourts()
+    {
+        return $this->hasMany(SportCourt::class);
+    }
 }
