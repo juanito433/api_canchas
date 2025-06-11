@@ -1,8 +1,125 @@
 <?php
 
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\HistoryController;
+use App\Http\Controllers\Api\modeController;
+use App\Http\Controllers\Api\ReservationController;
+use App\Http\Controllers\Api\ScheduleController;
+use App\Http\Controllers\Api\SportController;
+use App\Http\Controllers\Api\SportCourtController;
+use App\Http\Controllers\Api\UserController;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
+
+/* Usuarios*/
+
+// Consultar los usuarios
+Route::get('/users', [UserController::class, 'index']);
+// Consultar un usuario por id
+Route::get('/user/{id}', [UserController::class, 'show']);
+// Crear un nuevo usuario
+Route::post('/user', [UserController::class, 'store']);
+// Actualizar un usuario
+Route::put('/user/{id}', [UserController::class, 'update']);
+// Eliminar un usuario
+Route::delete('/user/{id}', [UserController::class, 'destroy']);
+
+
+/* Iniciar y cerrar Sesión de un usuario */
+// Iniciar sesión
+Route::post('/login', [AuthController::class, 'login']);
+// Cerrar sesión
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+
+
+
+
+/* Deportes */
+
+// Consultar los deportes
+Route::get('/sports', [SportController::class, 'index']);
+// Consultar un deporte por id
+Route::get('/sport/{id}', [SportController::class, 'show']);
+// Crear un nuevo deporte
+Route::post('/sport', [SportController::class, 'store'])->middleware('auth:sanctum');
+// Actualizar un deporte
+Route::put('/sport/{id}', [SportController::class, 'update']);
+// Eliminar un deporte
+Route::delete('/sport/{id}', [SportController::class, 'destroy'])->middleware('auth:sanctum');
+
+
+
+
+/* Canchas */
+// Consultar las canchas
+Route::get('/courts', [SportCourtController::class, 'all']);
+// Consultar las canchas de un deporte específico
+Route::get('/sport/{sport_id}/courts', [SportCourtController::class, 'index']);
+// Consultar las canchas con los deportes
+Route::get('/courts/sports', [SportCourtController::class, 'showAllCourts']);
+// Crear una nueva cancha para asignarla a un deporte
+Route::post('/sport/{sport_id}/court', [SportCourtController::class, 'store'])->middleware('auth:sanctum');
+// Actualizar una cancha
+Route::put('/sportcourt/{id}', [SportCourtController::class, 'update'])->middleware('auth:sanctum');
+// Eliminar una cancha
+Route::delete('/sportcourt/{id}', [SportCourtController::class, 'destroy'])->middleware('auth:sanctum');
+
+
+
+
+/* Modalidad */
+// Consultar las modalidades
+Route::get('/modalities', [modeController::class, 'all']);
+// Consultar las modalidades por el id
+Route::get('/mode/{id}', [modeController::class, 'show']);
+// Consultar las modalidades de un deporte
+Route::get('/sport/modes/{id}', [modeController::class, 'showModesBySport']);
+// Crear una nueva modalidad
+Route::post('/mode', [modeController::class, 'store'])->middleware('auth:sanctum');
+// Actualizar una modalidad
+Route::put('/mode/{id}', [modeController::class, 'update'])->middleware('auth:sanctum');
+// Eliminar una modalidad
+Route::delete('/mode/{id}', [modeController::class, 'destroy'])->middleware('auth:sanctum');
+
+
+
+
+/* Horarios */
+// Consultar los horarios
+Route::get('/schedules', [ScheduleController::class, 'index']);
+// Consultar un horario por id
+Route::get('/schedule/{id}', [ScheduleController::class, 'show']);
+// Registrar un nuevo horario
+Route::post('/schedule', [ScheduleController::class, 'storage'])->middleware('auth:sanctum');
+// Actualizar un horario
+Route::put('/schedule/{id}', [ScheduleController::class, 'update'])->middleware('auth:sanctum');
+// Eliminar un horario
+Route::delete('/schedule/{id}', [ScheduleController::class, 'destroy'])->middleware('auth:sanctum');
+
+
+
+
+/* Reservas */
+// Consultar las reservas
+Route::get('/reservations', [ReservationController::class, 'all']);
+// Consutar las reservas por id 
+Route::get('/reservations/{id}', [ReservationController::class, 'show']);
+// Consultar las reservas por medio del id del usuario
+Route::get('/user/reservation/{id}', [ReservationController::class, 'memberReservations']);
+// Realizar una reservación
+Route::post('/reservation/{member}/{schedule}/registrer', [ReservationController::class, 'storage'])->middleware('auth:sanctum');
+// Cancela una reservacion
+Route::put('cancel/reservation/{id}', [ReservationController::class, 'cancelReservation']);
+
+
+
+
+
+/* Historial */
+//Ruta para obtener el historial de un miembro
+Route::get('/history/{id}', [HistoryController::class, 'show']);

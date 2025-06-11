@@ -14,13 +14,13 @@ use Illuminate\Support\Facades\Validator;
 class ScheduleController extends Controller
 {
     // Obtener todos los horarios
-    public function all()
+    public function index()
     {
         return response()->json(schedules::all(), 200);
     }
 
     // Obtener un horario por su ID
-    public function index(Request $request)
+    public function show(Request $request)
     {
         $schedule = schedules::find($request->id);
         if (!$schedule) {

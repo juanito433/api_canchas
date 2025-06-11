@@ -18,6 +18,7 @@ class modeController extends Controller
         $mode = mode::all();
         return response()->json($mode, 200);
     }
+
     //listar todas la modalidades de una cancha especifica
     public function index($sportcourt_id)
     {
@@ -32,51 +33,50 @@ class modeController extends Controller
 
         return response()->json($sportcourt->courts, 200);
     }
-    /* Todas las modalidades de un deporte*/
-    public function formResrevations($id)
-    {
 
-        $sport = sport::find($id);
+    /* Todas las modalidades de un deporte*/
+    public function showModesBySport(Request $request) {
+        $sport = sport::find($request->sport_id);
 
         if (is_null($sport)) {
             return response()->json([
-                'message' => 'No se encontró el deporte con ese nombre',
+                'message' => 'Deporte no encontrado',
                 'status' => 404,
             ], 404);
         }
+        $sportcourts =  sportcourt::where('sport_id', $sport->id)->get();
 
-        $sportCourts = sportcourt::where('sport_id', $sport->id)->get();
-
-        if ($sportCourts->isEmpty()) {
+        if ($sportcourts->isEmpty()) {
             return response()->json([
-                'message' => 'No se encontraron canchas para este deporte',
+                'message' => 'No hay canchas registradas para este deporte',
                 'status' => 404,
             ], 404);
         }
 
-        $courtIds = $sportCourts->pluck('id');
-        $schedules = schedules::whereIn('sportcourt_id', $courtIds)->get();
+        $schedule = schedules::whereIn('sportcourt_id', $sportcourts->pluck('id'))->get();
 
-        if ($schedules->isEmpty()) {
+        if ($schedule->isEmpty()) {
             return response()->json([
-                'message' => 'No se encontraron horarios para estas canchas',
+                'message' => 'No hay modalidades registradas para este deporte',
                 'status' => 404,
             ], 404);
         }
 
-        $modeIds = $schedules->pluck('mode_id')->unique();
-        $modes = Mode::whereIn('id', $modeIds)->get();
+        $modesid = $schedule->pluck('mode_id')->unique();
+        $modes = mode::whereIn('id', $modesid)->get();
+
+        if ($modes->isEmpty()) {
+            return response()->json([
+                'message' => 'No hay modalidades registradas para este deporte',
+                'status' => 404,
+            ], 404);
+        }
 
         return response()->json([
-            'status' => 200,
             'sport' => $sport,
-            'courts' => $sportCourts,
-            'schedules' => $schedules,
             'modes' => $modes,
-        ], 200);
+        ]);
     }
-
-
 
     //Mostrar un modalidad por id
     public function show($id)
@@ -90,13 +90,13 @@ class modeController extends Controller
         }
         return response()->json($mode, 200);
     }
+
     //Crear una modalidad
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:255',
             'description' => 'required',
-            'sportcourt_id' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -110,7 +110,6 @@ class modeController extends Controller
         $mode = mode::create([
             'name' => $request->name,
             'description' => $request->description,
-            'sportcourt_id' => $request->sportcourt_id,
         ]);
 
         return response()->json($mode, 201);
@@ -128,7 +127,6 @@ class modeController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:255',
             'description' => 'required',
-            'sportcourt_id' => 'required',
         ]);
         if ($validator->fails()) {
             return response()->json([
@@ -141,7 +139,6 @@ class modeController extends Controller
             [
                 'name' => $request->name,
                 'description' => $request->description,
-                'sportcourt_id' => $request->sportcourt_id,
             ]
         );
         return response()->json([

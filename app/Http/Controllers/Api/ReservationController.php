@@ -19,7 +19,7 @@ class ReservationController extends Controller
     public function all()
     {
         $reservations = Reservation::with([
-            'member',
+            'user',
             'schedule.sportcourt.sport',
             'schedule.mode',
         ])->get();
@@ -49,7 +49,7 @@ class ReservationController extends Controller
     public function memberReservations($id)
     {
         try {
-            $reservations = Reservation::where('member_id', $id)->get();
+            $reservations = Reservation::where('user_id', $id)->get();
 
             if ($reservations->isEmpty()) {
                 return response()->json([

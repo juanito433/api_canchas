@@ -75,4 +75,56 @@ class SportCourtController extends Controller
             'status' => 201,
         ], 201);
     }
+    // Actualizar una cancha
+    public function update(Request $request)
+    {
+        $court = sportcourt::find($request->id);
+
+        if (!$court) {
+            return response()->json([
+                'message' => 'Cancha no encontrada',
+                'status' => 404,
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'num_sportcourt' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Error al validar los datos',
+                'errors' => $validator->errors(),
+                'status' => 400,
+            ], 400);
+        }
+
+        $court->num_sportcourt = $request->num_sportcourt;
+        $court->save();
+
+        return response()->json([
+            'court' => $court,
+            'message' => 'Cancha actualizada correctamente',
+            'status' => 200,
+        ], 200);
+    }
+    // Eliminar una cancha
+    public function destroy($id)
+    {
+        $court = sportcourt::find($id);
+
+        if (!$court) {
+            return response()->json([
+                'message' => 'Cancha no encontrada',
+                'status' => 404,
+            ], 404);
+        }
+
+        $court->delete();
+
+        return response()->json([
+            'message' => 'Cancha eliminada correctamente',
+            'status' => 200,
+        ], 200);
+    }
 }
