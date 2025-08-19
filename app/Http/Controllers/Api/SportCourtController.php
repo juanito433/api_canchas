@@ -13,16 +13,38 @@ class SportCourtController extends Controller
     #listar todas las canchas
     public function all()
     {
-        return response()->json(sportcourt::all(), 200);
+        // Cargar todas las canchas con su deporte relacionado
+        $courts = sportcourt::with('sport')->get();
+
+        if ($courts->isEmpty()) {
+            return response()->json([
+                'message' => 'No se han registrado canchas',
+                'status' => 404,
+            ], 404);
+        }
+
+        return response()->json([
+            'courts' => $courts,
+            'message' => 'Canchas obtenidas correctamente',
+            'status' => 200,
+        ], 200);
     }
-    //Obtener las canchas con los deportes 
+
+    //Obtener las canchas con los deportes
     public function showAllCourts()
     {
         $courts = sportcourt::all();
         $sports = sport::whereIn('id', $courts->pluck('sport_id'))->get();
 
-        return view('sportcourt.all-courts', compact('courts', 'sports'));
+        return response()->json([
+            'courts' => $courts,
+            'sports' => $sports,
+            'message' => 'Canchas y deportes obtenidos correctamente',
+            'status' => 200,
+        ], 200);
     }
+
+
 
 
     // Listar todas las canchas de un deporte específico

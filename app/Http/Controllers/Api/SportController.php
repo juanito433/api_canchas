@@ -84,16 +84,10 @@ class SportController extends Controller
         }
     }
 
-    //actualizar un deporte
-    public function update(Request $request, $id)
+
+    public function update(Request $request)
     {
-        // Debug temporal
-        Log::info('Request recibido:', $request->all());
-        Log::info('Archivos recibidos:', $request->file());
-
-        dd($request->all());
-
-        $sport = Sport::find($id);
+        $sport = Sport::find($request->id);
         if (!$sport) {
             return response()->json([
                 'message' => 'Deporte no encontrado',
@@ -101,33 +95,32 @@ class SportController extends Controller
             ], 404);
         }
 
-        $validator = Validator::make($request->all(), [
-            'name' => 'max:255',
-            'description' => 'max:255',
-            'image' => 'image',
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Error al validar los datos',
-                'errors' => $validator->errors(),
-                'status' => 400,
-            ], 400);
-        }
-
+        // Si se sube imagen, guardar la nueva y eliminar la anterior si existe
         if ($request->hasFile('image')) {
+            // Eliminar la imagen anterior si existe
+            if ($sport->image && Storage::disk('public')->exists(str_replace('/storage/', '', $sport->image))) {
+                Storage::disk('public')->delete(str_replace('/storage/', '', $sport->image));
+            }
+
             $imagePath = $request->file('image')->store('sports', 'public');
-            $imageUrl = Storage::url($imagePath);
+            $imageUrl = Storage::url($imagePath); // Obtiene la URL pública, ej: /storage/sports/filename.jpg
             $sport->image = $imageUrl;
         }
 
-        $sport->name = $request->name;
-        $sport->description = $request->description;
+        $sport->name = $request->input('name');
+        $sport->description = $request->input('description');
         $sport->save();
 
         return response()->json([
             'message' => 'Deporte actualizado correctamente',
             'status' => 200,
+            'sport' => $sport,
         ], 200);
     }
 

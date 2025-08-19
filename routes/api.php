@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\SportController;
 use App\Http\Controllers\Api\SportCourtController;
+use App\Http\Controllers\Api\SuggestionsController;
 use App\Http\Controllers\Api\UserController;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -46,14 +47,11 @@ Route::get('/sports', [SportController::class, 'index']);
 // Consultar un deporte por id
 Route::get('/sport/{id}', [SportController::class, 'show']);
 // Crear un nuevo deporte
-Route::post('/sport', [SportController::class, 'store'])->middleware('auth:sanctum');
+Route::post('/sport', [SportController::class, 'store'])/* ->middleware('auth:sanctum') */;
 // Actualizar un deporte
-Route::put('/sport/{id}', [SportController::class, 'update']);
+Route::put('/sport/update/{id}', [SportController::class, 'update']);
 // Eliminar un deporte
-Route::delete('/sport/{id}', [SportController::class, 'destroy'])->middleware('auth:sanctum');
-
-
-
+Route::delete('/sport/delete/{id}', [SportController::class, 'destroy']);
 
 /* Canchas */
 // Consultar las canchas
@@ -65,9 +63,9 @@ Route::get('/courts/sports', [SportCourtController::class, 'showAllCourts']);
 // Crear una nueva cancha para asignarla a un deporte
 Route::post('/sport/{sport_id}/court', [SportCourtController::class, 'store'])->middleware('auth:sanctum');
 // Actualizar una cancha
-Route::put('/sportcourt/{id}', [SportCourtController::class, 'update'])->middleware('auth:sanctum');
+Route::put('/court/{id}', [SportCourtController::class, 'update'])->middleware('auth:sanctum');
 // Eliminar una cancha
-Route::delete('/sportcourt/{id}', [SportCourtController::class, 'destroy'])->middleware('auth:sanctum');
+Route::delete('/court/{id}', [SportCourtController::class, 'destroy'])->middleware('auth:sanctum');
 
 
 
@@ -123,3 +121,17 @@ Route::put('cancel/reservation/{id}', [ReservationController::class, 'cancelRese
 /* Historial */
 //Ruta para obtener el historial de un miembro
 Route::get('/history/{id}', [HistoryController::class, 'show']);
+
+
+
+
+/* Sugerencias */
+//Ruta para crear una sugerencia
+Route::post('/suggestions', [SuggestionsController::class, 'createSuggestion']);
+//Ruta para obtener todas las sugerencias
+Route::get('/suggestions', [suggestionsController::class, 'getAllSuggestions']);
+//Ruta para obtener las sugerencias de un miembro
+Route::get('/suggestions/member/{id}', [suggestionsController::class, 'getSuggestionByMember']);
+//Ruta para obtener una sugerencia por el issuse
+Route::get('/suggestions/issuse/{issuse}', [suggestionsController::class, 'getSuggestionByIssuse']);
+
