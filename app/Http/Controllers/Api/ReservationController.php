@@ -93,7 +93,7 @@ class ReservationController extends Controller
     public function storage(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'member_id' => 'required|exists:members,id',
+            'user_id' => 'required|exists:users,id',
             'schedule_id' => 'required|exists:schedules,id',
             'date' => 'required|date|date_format:Y-m-d',
             'teammates' => 'required',
@@ -132,10 +132,10 @@ class ReservationController extends Controller
 
                 // Crear la reservación
                 $reservation = Reservation::create([
-                    'member_id' => $request->member_id,
+                    'user_id' => $request->user_id,
                     'schedule_id' => $request->schedule_id,
                     'date' => $request->date,
-                    'teammates' => $request->teammates,
+                    'teammates' => json_encode($request->teammates),
                     'confirmation' => $request->confirmation,
                     'status' => $request->status,
                 ]);

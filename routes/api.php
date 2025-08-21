@@ -3,11 +3,13 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\HistoryController;
 use App\Http\Controllers\Api\modeController;
+use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\SportController;
 use App\Http\Controllers\Api\SportCourtController;
 use App\Http\Controllers\Api\SuggestionsController;
+use App\Http\Controllers\Api\SvgController;
 use App\Http\Controllers\Api\UserController;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -110,9 +112,11 @@ Route::get('/reservations/{id}', [ReservationController::class, 'show']);
 // Consultar las reservas por medio del id del usuario
 Route::get('/user/reservation/{id}', [ReservationController::class, 'memberReservations']);
 // Realizar una reservación
-Route::post('/reservation/{member}/{schedule}/registrer', [ReservationController::class, 'storage'])->middleware('auth:sanctum');
+Route::post('/reservation/{member}/{schedule}/registrer', [ReservationController::class, 'storage']);
 // Cancela una reservacion
 Route::put('cancel/reservation/{id}', [ReservationController::class, 'cancelReservation']);
+//Ruta para obtener los datos para el formulario de las reservaciones; 
+Route::get('/reservations/options/{id}', [ReservationController::class, 'getReservationOptions']);
 
 
 
@@ -135,3 +139,12 @@ Route::get('/suggestions/member/{id}', [suggestionsController::class, 'getSugges
 //Ruta para obtener una sugerencia por el issuse
 Route::get('/suggestions/issuse/{issuse}', [suggestionsController::class, 'getSuggestionByIssuse']);
 
+
+
+
+
+/*  Reportes */
+Route::get('/reports/reservations', [ReportController::class, 'GenerateReport']);
+
+/* Grafica */
+Route::get('/reports/sport-usage', [SvgController::class, 'generateSvgChart']);
