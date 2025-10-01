@@ -84,7 +84,7 @@ class SportController extends Controller
         }
     }
 
-
+    // Actualizar un deporte
     public function update(Request $request)
     {
         $sport = Sport::find($request->id);

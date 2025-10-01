@@ -14,9 +14,30 @@ use Illuminate\Support\Facades\Validator;
 class ScheduleController extends Controller
 {
     // Obtener todos los horarios
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(schedules::all(), 200);
+        $schedules = schedules::all();
+        if ($schedules->isEmpty()) {
+            return response()->json([
+                'message' => 'No hay horarios registrados',
+                'status' => 404,
+            ], 404);
+        }
+
+        $schedulesWithDetails = $schedules->map(function ($schedule) {
+            $court = sportcourt::find($schedule->sportcourt_id);
+            $sport = sport::find($court->sport_id);
+            $mode = mode::find($schedule->mode_id);
+
+            return [
+                'schedule' => $schedule,
+                'num_court' => $court->num_sportcourt,
+                'sport' => $sport->name,
+                'mode' => $mode->name,
+            ];
+        });
+
+        return response()->json($schedulesWithDetails, 200);
     }
 
     // Obtener un horario por su ID
@@ -121,6 +142,7 @@ class ScheduleController extends Controller
             'status' => 200,
         ], 200);
     }
+    // Obtener horarios por fecha
     public function getSchedulesByDate($date)
     {
         // Convertir la fecha en un objeto Carbon
@@ -167,27 +189,6 @@ class ScheduleController extends Controller
         return response()->json([
             'sport_id' => $sportId,
             'schedules' => $schedules
-        ]);
-    }
-
-    public function scheduleAll(Request $request)
-    {
-        $schedule = schedules::find($request->id);
-        if (!$schedule) {
-            return response()->json([
-                'message' => 'Horario no encontrado',
-                'status' => 404,
-            ], 404);
-        }
-        $court = sportcourt::find($schedule->sportcourt_id);
-        $sport = sport::find($court->sport_id);
-        $mode = mode::find($schedule->mode_id);
-
-        return response()->json([
-            'schedule' => $schedule,
-            'num_court' => $court->num_sportcourt,
-            'sport' => $sport->name,
-            'mode' => $mode->name,
         ]);
     }
 }

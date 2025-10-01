@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\HistoryController;
 use App\Http\Controllers\Api\modeController;
+use App\Http\Controllers\Api\PenaltyController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\ScheduleController;
@@ -15,9 +16,15 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+
+/* Iniciar y cerrar Sesión de un usuario */
+// Crear un nuevo usuario
+Route::post('/users', [AuthController::class, 'store']);
+// Iniciar sesión
+Route::post('/login', [AuthController::class, 'login']);
+// Cerrar sesión
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+
 
 /* Usuarios*/
 
@@ -26,20 +33,11 @@ Route::get('/users', [UserController::class, 'index']);
 // Consultar un usuario por id
 Route::get('/user/{id}', [UserController::class, 'show']);
 // Crear un nuevo usuario
-Route::post('/user', [UserController::class, 'store']);
+Route::post('/users', [UserController::class, 'store']);
 // Actualizar un usuario
 Route::put('/user/{id}', [UserController::class, 'update']);
 // Eliminar un usuario
 Route::delete('/user/{id}', [UserController::class, 'destroy']);
-
-
-/* Iniciar y cerrar Sesión de un usuario */
-// Iniciar sesión
-Route::post('/login', [AuthController::class, 'login']);
-// Cerrar sesión
-Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
-
-
 
 
 /* Deportes */
@@ -139,6 +137,9 @@ Route::get('/suggestions/member/{id}', [suggestionsController::class, 'getSugges
 //Ruta para obtener una sugerencia por el issuse
 Route::get('/suggestions/issuse/{issuse}', [suggestionsController::class, 'getSuggestionByIssuse']);
 
+
+//Penalizaciones 
+Route::get('/penalties', [PenaltyController::class, 'index']);
 
 
 

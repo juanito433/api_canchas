@@ -29,7 +29,27 @@ class SportCourtController extends Controller
             'status' => 200,
         ], 200);
     }
+    // Listar todas las canchas de un deporte específico
+    public function index($sport_id)
+    {
+        $sport = Sport::find($sport_id);
 
+        if (!$sport) {
+            return response()->json([
+                'message' => 'Deporte no encontrado',
+                'status' => 404,
+            ], 404);
+        }
+        //si no hay canchas de ese deporte
+        if ($sport->courts->isEmpty()) {
+            return response()->json([
+                'message' => 'No hay canchas registradas para este deporte',
+                'status' => 404,
+            ], 404);
+        }
+
+        return response()->json($sport->courts, 200);
+    }
     //Obtener las canchas con los deportes
     public function showAllCourts()
     {
@@ -44,23 +64,6 @@ class SportCourtController extends Controller
         ], 200);
     }
 
-
-
-
-    // Listar todas las canchas de un deporte específico
-    public function index($sport_id)
-    {
-        $sport = Sport::find($sport_id);
-
-        if (!$sport) {
-            return response()->json([
-                'message' => 'Deporte no encontrado',
-                'status' => 404,
-            ], 404);
-        }
-
-        return response()->json($sport->courts, 200);
-    }
 
     // Agregar una nueva cancha a un deporte
     public function store(Request $request, $sport_id)

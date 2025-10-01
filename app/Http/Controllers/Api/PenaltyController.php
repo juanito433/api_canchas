@@ -10,11 +10,15 @@ use Illuminate\Support\Facades\Validator;
 class PenaltyController extends Controller
 {
     //obtener todas la penalizaciones 
-    public function all()
+    public function index()
     {
-        return response()->json(penalty::all(), 200);
+        $penalty = Penalty::all();
+        //traer la info del usuario relacionado con la penalización
+        $penalty->load('user');
+
+        return response()->json($penalty, 200);
     }
-    //obtener una penalizaci+on por su id
+    //obtener una penalización por su id
     public function show(Request $request)
     {
         $penalty = penalty::find($request->id);
