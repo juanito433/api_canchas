@@ -19,8 +19,8 @@ use Illuminate\Support\Facades\Route;
 
 /* Iniciar y cerrar Sesión de un usuario */
 // Crear un nuevo usuario
-Route::post('/users', [AuthController::class, 'store']);
-// Iniciar sesión
+/* Route::post('/users', [AuthController::class, 'store']);
+ */ // Iniciar sesión
 Route::post('/login', [AuthController::class, 'login']);
 // Cerrar sesión
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
@@ -61,11 +61,11 @@ Route::get('/sport/{sport_id}/courts', [SportCourtController::class, 'index']);
 // Consultar las canchas con los deportes
 Route::get('/courts/sports', [SportCourtController::class, 'showAllCourts']);
 // Crear una nueva cancha para asignarla a un deporte
-Route::post('/sport/{sport_id}/court', [SportCourtController::class, 'store'])->middleware('auth:sanctum');
+Route::post('/sport/{sport_id}/court', [SportCourtController::class, 'store']);
 // Actualizar una cancha
-Route::put('/court/{id}', [SportCourtController::class, 'update'])->middleware('auth:sanctum');
+Route::put('/court/{id}', [SportCourtController::class, 'update']);
 // Eliminar una cancha
-Route::delete('/court/{id}', [SportCourtController::class, 'destroy'])->middleware('auth:sanctum');
+Route::delete('/court/{id}', [SportCourtController::class, 'destroy']);
 
 
 
@@ -78,7 +78,7 @@ Route::get('/mode/{id}', [modeController::class, 'show']);
 // Consultar las modalidades de un deporte
 Route::get('/sport/modes/{id}', [modeController::class, 'showModesBySport']);
 // Crear una nueva modalidad
-Route::post('/mode', [modeController::class, 'store'])->middleware('auth:sanctum');
+Route::post('/mode', [modeController::class, 'store']);
 // Actualizar una modalidad
 Route::put('/mode/{id}', [modeController::class, 'update'])->middleware('auth:sanctum');
 // Eliminar una modalidad
@@ -93,13 +93,13 @@ Route::get('/schedules', [ScheduleController::class, 'index']);
 // Consultar un horario por id
 Route::get('/schedule/{id}', [ScheduleController::class, 'show']);
 // Registrar un nuevo horario
-Route::post('/schedule', [ScheduleController::class, 'storage'])->middleware('auth:sanctum');
+Route::post('/schedule', [ScheduleController::class, 'storage']);
 // Actualizar un horario
 Route::put('/schedule/{id}', [ScheduleController::class, 'update'])->middleware('auth:sanctum');
 // Eliminar un horario
 Route::delete('/schedule/{id}', [ScheduleController::class, 'destroy'])->middleware('auth:sanctum');
-
-
+/* Consulta de los horarios de un deporte especifico */
+Route::get('/schedule/sport/{id}', [ScheduleController::class, 'getSchedulesBySport']);
 
 
 /* Reservas */
@@ -115,7 +115,6 @@ Route::post('/reservation/{member}/{schedule}/registrer', [ReservationController
 Route::put('cancel/reservation/{id}', [ReservationController::class, 'cancelReservation']);
 //Ruta para obtener los datos para el formulario de las reservaciones; 
 Route::get('/reservations/options/{id}', [ReservationController::class, 'getReservationOptions']);
-
 
 
 

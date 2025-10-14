@@ -180,15 +180,65 @@ class ScheduleController extends Controller
             'schedules' => $schedules
         ]);
     }
-    public function getSchedulesBySport($sportId)
+    public function getSchedulesBySport($id)
     {
-        // Obtener los horarios que tienen el deporte especificado
-        $schedules = schedules::where('sportcourt_id', $sportId)->get();
+        // 1️ Buscar el deporte por su ID
+        $sport = Sport::find($id);
+        if (!$sport) {
+            return response()->json([
+                'message' => 'Deporte no encontrado',
+                'status' => 404,
+            ], 404);
+        }
 
-        // Retornar la respuesta en JSON
+        // 2️ Obtener las canchas asociadas a ese deporte
+        $courts = SportCourt::where('sport_id', $sport->id)->get();
+        if ($courts->isEmpty()) {
+            return response()->json([
+                'message' => 'No hay canchas registradas para este deporte',
+                'status' => 404,
+            ], 404);
+        }
+
+        // 3 Obtener todos los horarios de esas canchas
+        $courtIds = $courts->pluck('id');
+
+        $schedules = Schedules::whereIn('sportcourt_id', $courtIds)
+            ->with([
+                'sportcourt.sport',  
+                'sportcourt',        
+                'mode'               
+            ])
+            ->get();
+
+        if ($schedules->isEmpty()) {
+            return response()->json([
+                'message' => 'No hay horarios registrados para este deporte',
+                'status' => 404,
+            ], 404);
+        }
+
+        // 4️ Formatear los datos para respuesta clara
+        $formatted = $schedules->map(function ($schedule) {
+            return [
+                'id' => $schedule->id,
+                'day' => $schedule->days,
+                'start_time' => $schedule->start_time,
+                'end_time' => $schedule->end_time,
+                'court_number' => $schedule->sportcourt ? $schedule->sportcourt->num_sportcourt : null,
+                'sport' => $schedule->sportcourt && $schedule->sportcourt->sport
+                    ? $schedule->sportcourt->sport->name
+                    : null,
+                'mode' => $schedule->mode ? $schedule->mode->name : null,
+            ];
+        });
+
+        // 5️ Respuesta final JSON
         return response()->json([
-            'sport_id' => $sportId,
-            'schedules' => $schedules
+            'sport_id' => $sport->id,
+            'sport_name' => $sport->name,
+            'total_schedules' => $formatted->count(),
+            'schedules' => $formatted,
         ]);
     }
 }
