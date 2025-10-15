@@ -182,7 +182,7 @@ class ScheduleController extends Controller
     }
     public function getSchedulesBySport($id)
     {
-        // 1️ Buscar el deporte por su ID
+        // Buscar el deporte por su ID
         $sport = Sport::find($id);
         if (!$sport) {
             return response()->json([
@@ -191,7 +191,7 @@ class ScheduleController extends Controller
             ], 404);
         }
 
-        // 2️ Obtener las canchas asociadas a ese deporte
+        // btener las canchas asociadas a ese deporte
         $courts = SportCourt::where('sport_id', $sport->id)->get();
         if ($courts->isEmpty()) {
             return response()->json([
@@ -200,43 +200,44 @@ class ScheduleController extends Controller
             ], 404);
         }
 
-        // 3 Obtener todos los horarios de esas canchas
+        // Obtener los IDs de las canchas
         $courtIds = $courts->pluck('id');
 
-        $schedules = Schedules::whereIn('sportcourt_id', $courtIds)
-            ->with([
-                'sportcourt.sport',  
-                'sportcourt',        
-                'mode'               
-            ])
+        // Obtener todos los horarios (LEFT JOIN manual para incluir canchas sin horarios)
+        $schedules = SportCourt::whereIn('sportcourts.id', $courtIds)
+            ->leftJoin('schedules', 'sportcourts.id', '=', 'schedules.sportcourt_id')
+            ->leftJoin('modes', 'schedules.mode_id', '=', 'modes.id')
+            ->select(
+                'sportcourts.id as court_id',
+                'sportcourts.num_sportcourt as court_number',
+                'schedules.id as schedule_id',
+                'schedules.days',
+                'schedules.start_time',
+                'schedules.end_time',
+                'modes.name as mode_name'
+            )
+            ->orderBy('sportcourts.num_sportcourt')
+            ->orderBy('schedules.start_time')
             ->get();
 
-        if ($schedules->isEmpty()) {
-            return response()->json([
-                'message' => 'No hay horarios registrados para este deporte',
-                'status' => 404,
-            ], 404);
-        }
-
-        // 4️ Formatear los datos para respuesta clara
-        $formatted = $schedules->map(function ($schedule) {
+        // Formatear los datos de salida
+        $formatted = $schedules->map(function ($item) use ($sport) {
             return [
-                'id' => $schedule->id,
-                'day' => $schedule->days,
-                'start_time' => $schedule->start_time,
-                'end_time' => $schedule->end_time,
-                'court_number' => $schedule->sportcourt ? $schedule->sportcourt->num_sportcourt : null,
-                'sport' => $schedule->sportcourt && $schedule->sportcourt->sport
-                    ? $schedule->sportcourt->sport->name
-                    : null,
-                'mode' => $schedule->mode ? $schedule->mode->name : null,
+                'id' => $item->schedule_id,
+                'day' => $item->days,
+                'start_time' => $item->start_time,
+                'end_time' => $item->end_time,
+                'court_number' => $item->court_number,
+                'sport' => $sport->name,
+                'mode' => $item->mode_name,
             ];
         });
 
-        // 5️ Respuesta final JSON
+        // Respuesta final
         return response()->json([
             'sport_id' => $sport->id,
             'sport_name' => $sport->name,
+            'total_courts' => $courts->count(),
             'total_schedules' => $formatted->count(),
             'schedules' => $formatted,
         ]);
