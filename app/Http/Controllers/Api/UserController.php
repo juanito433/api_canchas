@@ -39,21 +39,17 @@ class UserController extends Controller
     //crear un nuevo usuario
     public function store(Request $request)
     {
-        // Validar los datos de entrada
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-
             'lastname' => 'required|string|max:255',
             'lastname2' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users',
             'phone' => 'required|string|max:15',
             'role' => 'required|string',
-            'remember_token' => 'nullable|string|max:100',
-
         ]);
-        // Crear un nuevo usuario
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -62,13 +58,15 @@ class UserController extends Controller
             'lastname2' => $request->lastname2,
             'username' => $request->username,
             'phone' => $request->phone,
+            'role' => $request->role, // <- importante
         ]);
-        // Retornar el usuario creado
+
         return response()->json([
             'message' => 'User created successfully',
             'user' => $user
         ], 201);
     }
+
     //actualizar un usuario, solo se actualizara el username, phone y photo_url}
     public function update(Request $request, $id)
     {
@@ -108,4 +106,23 @@ class UserController extends Controller
         $user->delete();
         return response()->json(['message' => 'User deleted successfully'], 200);
     }
+
+    public function Search(Request $request)
+    {
+        $query = $request->query('query', ''); // por defecto vacío
+        $page = $request->query('page', 1);   // opcional, paginación
+
+        $users = User::where(function ($q) use ($query) {
+            $q->where('name', 'like', "%{$query}%")
+                ->orWhere('lastname', 'like', "%{$query}%")
+                ->orWhere('lastname2', 'like', "%{$query}%")
+                ->orWhere('username', 'like', "%{$query}%")
+                ->orWhere('email', 'like', "%{$query}%");
+        })
+            ->orderBy('name')
+            ->paginate(20); // 20 usuarios por página
+
+        return response()->json($users);
+    }
+    
 }

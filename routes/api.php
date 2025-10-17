@@ -12,6 +12,8 @@ use App\Http\Controllers\Api\SportCourtController;
 use App\Http\Controllers\Api\SuggestionsController;
 use App\Http\Controllers\Api\SvgController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -38,6 +40,9 @@ Route::post('/users', [UserController::class, 'store']);
 Route::put('/user/{id}', [UserController::class, 'update']);
 // Eliminar un usuario
 Route::delete('/user/{id}', [UserController::class, 'destroy']);
+
+// Buscar usuarios
+Route::get('/users/search', [UserController::class, 'Search']);
 
 
 /* Deportes */
@@ -148,3 +153,10 @@ Route::get('/reports/reservations', [ReportController::class, 'GenerateReport'])
 
 /* Grafica */
 Route::get('/reports/sport-usage', [SvgController::class, 'generateSvgChart']);
+
+
+/* forgot de contraseñas  */
+// En routes/api.php
+Route::post('/auth/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail']);
+/* reset de contraseñas  */
+Route::post('/password/reset', [ResetPasswordController::class, 'reset']);

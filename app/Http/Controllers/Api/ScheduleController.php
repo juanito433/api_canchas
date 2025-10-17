@@ -56,12 +56,13 @@ class ScheduleController extends Controller
     // Registrar un nuevo horario
     public function storage(Request $request)
     {
+        // Validación inicial
         $validator = Validator::make($request->all(), [
             'days' => 'required',
             'sportcourt_id' => 'required|integer',
             'mode_id' => 'required|integer',
-            'start_time' => 'required',
-            'end_time' => 'required',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i|after:start_time',
         ]);
 
         if ($validator->fails()) {
@@ -72,12 +73,38 @@ class ScheduleController extends Controller
             ], 422);
         }
 
+        // Variables de entrada
+        $day = $request->days;
+        $court = $request->sportcourt_id;
+        $start = $request->start_time;
+        $end = $request->end_time;
+
+        // Buscar horarios que se crucen con el nuevo rango
+        $conflict = schedules::where('days', $day)
+            ->where('sportcourt_id', $court)
+            ->where(function ($query) use ($start, $end) {
+                $query->where(function ($q) use ($start, $end) {
+                    $q->where('start_time', '<', $end)
+                        ->where('end_time', '>', $start);
+                });
+            })
+            ->first();
+
+        if ($conflict) {
+            return response()->json([
+                'message' => 'No se puede registrar el horario porque se cruza con otro existente.',
+                'conflict_schedule' => $conflict,
+                'status' => 409, // 409 = conflicto
+            ], 409);
+        }
+
+        // Si no hay conflictos, crear el nuevo horario
         $schedule = schedules::create([
-            'days' => $request->days,
-            'sportcourt_id' => $request->sportcourt_id,
+            'days' => $day,
+            'sportcourt_id' => $court,
             'mode_id' => $request->mode_id,
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
+            'start_time' => $start,
+            'end_time' => $end,
             'status' => 'Disponible',
         ]);
 
@@ -87,6 +114,7 @@ class ScheduleController extends Controller
             'status' => 201,
         ], 201);
     }
+
 
     // Actualizar un horario
     public function update(Request $request)
