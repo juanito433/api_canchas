@@ -19,8 +19,8 @@ use Illuminate\Support\Facades\Route;
 
 /* Iniciar y cerrar Sesión de un usuario */
 // Crear un nuevo usuario
-Route::post('/users', [AuthController::class, 'store']);
-// Iniciar sesión
+/* Route::post('/users', [AuthController::class, 'store']);
+ */// Iniciar sesión
 Route::post('/login', [AuthController::class, 'login']);
 // Cerrar sesión
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
