@@ -56,12 +56,13 @@ class ScheduleController extends Controller
     // Registrar un nuevo horario
     public function storage(Request $request)
     {
+        // Validación inicial
         $validator = Validator::make($request->all(), [
             'days' => 'required',
             'sportcourt_id' => 'required|integer',
             'mode_id' => 'required|integer',
-            'start_time' => 'required',
-            'end_time' => 'required',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i|after:start_time',
         ]);
 
         if ($validator->fails()) {
@@ -72,12 +73,38 @@ class ScheduleController extends Controller
             ], 422);
         }
 
+        // Variables de entrada
+        $day = $request->days;
+        $court = $request->sportcourt_id;
+        $start = $request->start_time;
+        $end = $request->end_time;
+
+        // Buscar horarios que se crucen con el nuevo rango
+        $conflict = schedules::where('days', $day)
+            ->where('sportcourt_id', $court)
+            ->where(function ($query) use ($start, $end) {
+                $query->where(function ($q) use ($start, $end) {
+                    $q->where('start_time', '<', $end)
+                        ->where('end_time', '>', $start);
+                });
+            })
+            ->first();
+
+        if ($conflict) {
+            return response()->json([
+                'message' => 'No se puede registrar el horario porque se cruza con otro existente.',
+                'conflict_schedule' => $conflict,
+                'status' => 409, // 409 = conflicto
+            ], 409);
+        }
+
+        // Si no hay conflictos, crear el nuevo horario
         $schedule = schedules::create([
-            'days' => $request->days,
-            'sportcourt_id' => $request->sportcourt_id,
+            'days' => $day,
+            'sportcourt_id' => $court,
             'mode_id' => $request->mode_id,
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
+            'start_time' => $start,
+            'end_time' => $end,
             'status' => 'Disponible',
         ]);
 
@@ -87,6 +114,7 @@ class ScheduleController extends Controller
             'status' => 201,
         ], 201);
     }
+
 
     // Actualizar un horario
     public function update(Request $request)
@@ -180,15 +208,66 @@ class ScheduleController extends Controller
             'schedules' => $schedules
         ]);
     }
-    public function getSchedulesBySport($sportId)
+    public function getSchedulesBySport($id)
     {
-        // Obtener los horarios que tienen el deporte especificado
-        $schedules = schedules::where('sportcourt_id', $sportId)->get();
+        // Buscar el deporte por su ID
+        $sport = Sport::find($id);
+        if (!$sport) {
+            return response()->json([
+                'message' => 'Deporte no encontrado',
+                'status' => 404,
+            ], 404);
+        }
 
-        // Retornar la respuesta en JSON
+        // btener las canchas asociadas a ese deporte
+        $courts = SportCourt::where('sport_id', $sport->id)->get();
+        if ($courts->isEmpty()) {
+            return response()->json([
+                'message' => 'No hay canchas registradas para este deporte',
+                'status' => 404,
+            ], 404);
+        }
+
+        // Obtener los IDs de las canchas
+        $courtIds = $courts->pluck('id');
+
+        // Obtener todos los horarios (LEFT JOIN manual para incluir canchas sin horarios)
+        $schedules = SportCourt::whereIn('sportcourts.id', $courtIds)
+            ->leftJoin('schedules', 'sportcourts.id', '=', 'schedules.sportcourt_id')
+            ->leftJoin('modes', 'schedules.mode_id', '=', 'modes.id')
+            ->select(
+                'sportcourts.id as court_id',
+                'sportcourts.num_sportcourt as court_number',
+                'schedules.id as schedule_id',
+                'schedules.days',
+                'schedules.start_time',
+                'schedules.end_time',
+                'modes.name as mode_name'
+            )
+            ->orderBy('sportcourts.num_sportcourt')
+            ->orderBy('schedules.start_time')
+            ->get();
+
+        // Formatear los datos de salida
+        $formatted = $schedules->map(function ($item) use ($sport) {
+            return [
+                'id' => $item->schedule_id,
+                'day' => $item->days,
+                'start_time' => $item->start_time,
+                'end_time' => $item->end_time,
+                'court_number' => $item->court_number,
+                'sport' => $sport->name,
+                'mode' => $item->mode_name,
+            ];
+        });
+
+        // Respuesta final
         return response()->json([
-            'sport_id' => $sportId,
-            'schedules' => $schedules
+            'sport_id' => $sport->id,
+            'sport_name' => $sport->name,
+            'total_courts' => $courts->count(),
+            'total_schedules' => $formatted->count(),
+            'schedules' => $formatted,
         ]);
     }
 }
