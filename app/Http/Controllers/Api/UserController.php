@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\UserDeletedMail;
 
 class UserController extends Controller
 {
@@ -96,16 +98,26 @@ class UserController extends Controller
             'user' => $user
         ]);
     }
+
     public function destroy($id)
     {
         $user = User::find($id);
-        //si no se encuentra el usuario, retornar un mensaje
+
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
+
+        $email = $user->email;
+        $username = $user->username;
+
         $user->delete();
+
+        // Enviar correo notificando eliminación
+        Mail::to($email)->send(new UserDeletedMail($username));
+
         return response()->json(['message' => 'User deleted successfully'], 200);
     }
+
 
     public function Search(Request $request)
     {
@@ -124,5 +136,4 @@ class UserController extends Controller
 
         return response()->json($users);
     }
-    
 }
