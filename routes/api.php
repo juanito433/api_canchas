@@ -159,4 +159,4 @@ Route::get('/reports/sport-usage', [SvgController::class, 'generateSvgChart']);
 // En routes/api.php
 Route::post('/auth/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail']);
 /* reset de contraseñas  */
-Route::post('/password/reset', [ResetPasswordController::class, 'reset']);
+Route::post('/auth/reset-password', [ResetPasswordController::class, 'reset']);
