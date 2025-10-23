@@ -11,6 +11,7 @@ use App\Models\sportcourt;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class ReservationController extends Controller
@@ -92,74 +93,77 @@ class ReservationController extends Controller
     //Realizar una reservacion de una cancha
     public function storage(Request $request)
     {
+        // === 1️⃣ Validar los datos recibidos ===
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|exists:users,id',
             'schedule_id' => 'required|exists:schedules,id',
             'date' => 'required|date|date_format:Y-m-d',
-            'teammates' => 'required',
-            'confirmation' => 'required',
-            'status' => 'required',
+            'teammates' => 'nullable|array',
+            'confirmation' => 'required|string',
+            'status' => 'required|string',
         ]);
+
+        Log::info('Payload recibido:', $request->all());
 
         if ($validator->fails()) {
             return response()->json([
-                'message' => 'Error al validar los datos ingresados',
+                'message' => 'Error al validar los datos.',
                 'errors' => $validator->errors(),
+                'data_recibida' => $request->all(),
                 'status' => 422,
             ], 422);
         }
 
         try {
+            // === 2️⃣ Crear la reserva dentro de una transacción para seguridad ===
             $reservation = DB::transaction(function () use ($request) {
-                // **Bloqueo pesimista:** Verificar disponibilidad con SELECT ... FOR UPDATE
-                $schedule = schedules::where('id', $request->schedule_id)
-                    ->where('status', 'Libre')
+
+                // Buscar el horario y bloquearlo para evitar reservas duplicadas
+                $schedule = Schedules::where('id', $request->schedule_id)
+                    ->where('status', 'Disponible')
                     ->lockForUpdate()
                     ->first();
 
                 if (!$schedule) {
-                    // Si el horario ya fue tomado recientemente, obtener el tiempo exacto de la reserva
-                    $lastReservation = Reservation::where('schedule_id', $request->schedule_id)
-                        ->latest()
-                        ->first();
-
-                    return response()->json([
-                        'message' => 'Lo sentimos, esta cancha ya ha sido reservada',
-                        'reserved_at' => $lastReservation ? $lastReservation->created_at->diffForHumans() : 'Hace unos momentos',
-                        'status' => 409,
-                    ], 409);
+                    throw new \Exception('Horario no disponible o ya reservado.');
                 }
 
-                // Crear la reservación
+                // Crear la reserva
                 $reservation = Reservation::create([
                     'user_id' => $request->user_id,
                     'schedule_id' => $request->schedule_id,
                     'date' => $request->date,
-                    'teammates' => json_encode($request->teammates),
+                    'teammates' => json_encode($request->teammates ?? []),
                     'confirmation' => $request->confirmation,
                     'status' => $request->status,
                 ]);
 
-                // Actualizar el estado del horario
-                $schedule->status = 'ocupado';
+                // Cambiar el estado del horario a ocupado
+                $schedule->status = 'Ocupado';
                 $schedule->save();
 
                 return $reservation;
             });
 
+            // === 3️⃣ Respuesta exitosa ===
             return response()->json([
-                'message' => 'Reservación registrada correctamente',
+                'message' => 'Reservación registrada correctamente.',
                 'reservation' => $reservation,
                 'status' => 201,
             ], 201);
         } catch (\Exception $e) {
+            Log::error('Error creando reservación:', ['error' => $e->getMessage()]);
             return response()->json([
-                'message' => 'Error al registrar la reservación',
+                'message' => 'Error al registrar la reservación.',
                 'error' => $e->getMessage(),
                 'status' => 500,
             ], 500);
         }
     }
+
+
+
+
     //cancelar la reservación
     public function cancelReservation($id)
     {
@@ -381,8 +385,8 @@ class ReservationController extends Controller
 
     public function getReservationOptions(Request $request, $id)
     {
+        // 1️⃣ Buscar el deporte
         $sport = sport::find($id);
-
         if (!$sport) {
             return response()->json([
                 'message' => 'Deporte no encontrado',
@@ -390,89 +394,81 @@ class ReservationController extends Controller
             ]);
         }
 
+        // 2️⃣ Obtener canchas
         $courts = sportcourt::where('sport_id', $sport->id)->get();
-
         if ($courts->isEmpty()) {
             return response()->json([
                 'message' => 'No hay canchas registradas para este deporte',
                 'status' => 404,
             ]);
         }
-
         $courtIds = $courts->pluck('id');
 
-        // Obtener horarios disponibles generales
-        $availableDaysWithSchedules = collect();
+        // 3️⃣ Determinar el día siguiente y su categoría
+        $tomorrow = now()->addDay();
+        $weekDay = strtolower($tomorrow->format('l')); // monday, tuesday, friday, etc.
+
+        // 4️⃣ Traducir al formato de tu BD
+        $dayToFilter = match ($weekDay) {
+            'friday' => 'friday',
+            'saturday', 'sunday' => 'weekend_holiday',
+            default => 'weekday',
+        };
+
+        // 5️⃣ Capturar modalidad seleccionada (si se envía)
+        $modeId = $request->query('mode_id');
+
+        // 🔍 Log para depuración
+        Log::info('🔍 FILTROS:', [
+            'sport_id' => $id,
+            'mode_id' => $modeId,
+            'dayToFilter' => $dayToFilter,
+            'courtIds' => $courtIds,
+        ]);
 
         try {
-            $allSchedules = schedules::whereIn('sportcourt_id', $courtIds)
-                ->where('status', 'Libre')
-                ->get();
+            // 6️⃣ Obtener horarios del deporte para el día filtrado
+            $query = schedules::whereIn('sportcourt_id', $courtIds)
+                ->whereRaw('LOWER(TRIM(days)) = ?', [strtolower($dayToFilter)]);
 
-            $availableDaysWithSchedules = $allSchedules
-                ->groupBy('days')
-                ->map(function ($dayGroup, $day) {
-                    return [
-                        'day' => $day,
-                        'schedules' => $dayGroup->map(function ($schedule) {
-                            return [
-                                'id' => $schedule->id,
-                                'start_time' => $schedule->start_time,
-                                'end_time' => $schedule->end_time,
-                                'court_id' => $schedule->sportcourt_id,
-                                'mode_id' => $schedule->mode_id,
-                            ];
-                        })->values()
-                    ];
-                })
-                ->values();
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al obtener los días disponibles con horarios',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+            if ($modeId) {
+                $query->where('mode_id', (int) $modeId);
+            }
 
-        if ($request->has('days')) {
-            $selectedDay = trim(strtolower($request->input('days')));
+            $availableSchedules = $query->get();
 
-            $schedules = schedules::whereIn('sportcourt_id', $courtIds)
-                ->whereRaw('LOWER(TRIM(days)) = ?', [$selectedDay])
-                ->get(); // Trae todos, sin filtrar por 'Libre'
+            // 🔍 Log de los horarios obtenidos
+            Log::info('🕒 Horarios encontrados:', ['count' => $availableSchedules->count()]);
 
-            if ($schedules->isEmpty()) {
+            if ($availableSchedules->isEmpty()) {
                 return response()->json([
                     'status' => 200,
                     'sport' => $sport,
-                    'day_selected' => ucfirst($selectedDay),
-                    'message' => 'No hay horarios registrados para este día',
+                    'days' => $dayToFilter,
+                    'date' => $tomorrow->toDateString(),
+                    'message' => 'No hay horarios disponibles para este día o modalidad',
+                    'modes' => [],
+                    'schedules' => [],
                     'courts' => $courts,
                 ]);
             }
 
-            // Mapear courts y modes para acceder por ID
-            $courtsMap = sportcourt::whereIn('id', $schedules->pluck('sportcourt_id')->unique())->get()->keyBy('id');
-            $modesMap = mode::whereIn('id', $schedules->pluck('mode_id')->unique())->get()->keyBy('id');
+            // 7️⃣ Obtener las modalidades relacionadas
+            $modesMap = mode::whereIn('id', $availableSchedules->pluck('mode_id')->unique())->get()->keyBy('id');
 
-            // Obtener IDs de horarios reservados
-            $reservedScheduleIds = reservation::where('status', 'Reservado')->pluck('schedule_id')->toArray();
+            // 8️⃣ Obtener IDs de horarios reservados
+            $reservedIds = reservation::where('status', 'Reservado')->pluck('schedule_id')->toArray();
 
-            $schedulesFormatted = $schedules->map(function ($schedule) use ($courtsMap, $modesMap, $reservedScheduleIds) {
-                $court = $courtsMap[$schedule->sportcourt_id] ?? null;
+            // 9️⃣ Formatear los horarios
+            $schedulesFormatted = $availableSchedules->map(function ($schedule) use ($reservedIds, $modesMap) {
+                $isReserved = in_array($schedule->id, $reservedIds);
                 $mode = $modesMap[$schedule->mode_id] ?? null;
-
-                $isReserved = in_array($schedule->id, $reservedScheduleIds);
 
                 return [
                     'id' => $schedule->id,
-                    'day' => $schedule->days,
                     'start_time' => $schedule->start_time,
                     'end_time' => $schedule->end_time,
-                    'status' => $schedule->status,
-                    'court' => $court ? [
-                        'id' => $court->id,
-                        'num' => $court->num_sportcourt,
-                    ] : null,
+                    'status' => $isReserved ? 'Reservado' : $schedule->status,
                     'mode' => $mode ? [
                         'id' => $mode->id,
                         'name' => $mode->name,
@@ -480,17 +476,22 @@ class ReservationController extends Controller
                     ] : null,
                 ];
             });
-        };
 
-
-
-        return response()->json([
-            'status' => 200,
-            'sport' => $sport,
-            'day_selected' => ucfirst($selectedDay),
-            'schedules' => $schedulesFormatted,
-            'courts' => $courts,
-            'modes' => $modesMap->values(),
-        ]);
+            // 10️⃣ Devolver respuesta final
+            return response()->json([
+                'status' => 200,
+                'sport' => $sport,
+                'days' => $dayToFilter,
+                'date' => $tomorrow->toDateString(),
+                'modes' => $modesMap->values(),
+                'schedules' => $schedulesFormatted,
+                'courts' => $courts,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error al obtener horarios',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

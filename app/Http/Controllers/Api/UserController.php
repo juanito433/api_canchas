@@ -136,4 +136,26 @@ class UserController extends Controller
 
         return response()->json($users);
     }
+    public function SearchMember(Request $request)
+    {
+        $query = $request->query('query', ''); // texto buscado
+
+        $users = User::where('role', '!=', 'admin') // Excluir administradores
+            ->where(function ($q) use ($query) {
+                $q->where('name', 'like', "%{$query}%")
+                    ->orWhere('lastname', 'like', "%{$query}%")
+                    ->orWhere('lastname2', 'like', "%{$query}%")
+                    ->orWhere('username', 'like', "%{$query}%")
+                    ->orWhere('email', 'like', "%{$query}%");
+            })
+            ->orderBy('name')
+            ->select('id', 'name', 'email', 'role') // solo datos necesarios
+            ->limit(15)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'users' => $users
+        ], 200);
+    }
 }

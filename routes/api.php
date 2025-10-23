@@ -43,7 +43,8 @@ Route::delete('/user/{id}', [UserController::class, 'destroy']);
 
 // Buscar usuarios
 Route::get('/users/search', [UserController::class, 'Search']);
-
+//Buscar usuarios por rol member
+Route::get('/users/search/member', [UserController::class, 'SearchMember']);
 
 /* Deportes */
 
@@ -115,7 +116,7 @@ Route::get('/reservations/{id}', [ReservationController::class, 'show']);
 // Consultar las reservas por medio del id del usuario
 Route::get('/user/reservation/{id}', [ReservationController::class, 'memberReservations']);
 // Realizar una reservación
-Route::post('/reservation/{member}/{schedule}/registrer', [ReservationController::class, 'storage']);
+Route::post('/reservation/registrer', [ReservationController::class, 'storage']);
 // Cancela una reservacion
 Route::put('cancel/reservation/{id}', [ReservationController::class, 'cancelReservation']);
 //Ruta para obtener los datos para el formulario de las reservaciones; 
