@@ -56,6 +56,7 @@ class HistoryController extends Controller
                     'sport' => $sport->name,
                     'mode' => $mode->name,
                     'date' => $reservation->date,
+                    'reserved_at' => $reservation->created_at,
                     'status' => $reservation->status,
                     'confirmation' => $reservation->confirmation,
                     'teammates' => $teammates,

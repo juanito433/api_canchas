@@ -13,6 +13,7 @@ class penalty extends Model
         'cause',
         'penalty',
         'date',
+        'expiration_date',
         'user_id',
     ];
 
