@@ -121,8 +121,8 @@ Route::post('/reservation/registrer', [ReservationController::class, 'storage'])
 Route::put('cancel/reservation/{id}', [ReservationController::class, 'cancelReservation']);
 //Ruta para obtener los datos para el formulario de las reservaciones; 
 Route::get('/reservations/options/{id}', [ReservationController::class, 'getReservationOptions']);
-
-
+/* Reservacion del dia */
+Route::get('/reservations/today', [ReservationController::class, 'todayReservations']);
 
 
 /* Historial */
@@ -145,6 +145,7 @@ Route::get('/suggestions/issuse/{issuse}', [suggestionsController::class, 'getSu
 
 //Penalizaciones 
 Route::get('/penalties', [PenaltyController::class, 'index']);
+Route::get('/penalty/{id}', [PenaltyController::class, 'show']);
 
 
 

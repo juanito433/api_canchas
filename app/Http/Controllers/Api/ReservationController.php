@@ -39,6 +39,31 @@ class ReservationController extends Controller
 
         return response()->json($reservations);
     }
+    /* Reservaciones del dia, se cunetas vcunatas hay */
+    public function todayReservations(Request $request)
+    {
+        $userId = $request->user()->id; // Usuario autenticado
+        $today = now()->format('Y-m-d');
+
+        $reservations = Reservation::with([
+            'schedule.sportcourt.sport',
+            'schedule.mode',
+        ])
+            ->where('user_id', $userId)
+            ->where('date', $today)
+            ->get();
+
+        $reservations->each(function ($reservation) {
+            $teammateIds = json_decode($reservation->teammates, true) ?? [];
+            $reservation->teammates_data = !empty($teammateIds)
+                ? User::whereIn('id', $teammateIds)->get(['id', 'name'])
+                : [];
+        });
+
+        return response()->json($reservations);
+    }
+
+
 
     //Función para visualizar una sola reservación
     public function show(Request $request)
@@ -111,7 +136,7 @@ class ReservationController extends Controller
                 'errors' => $validator->errors(),
                 'data_recibida' => $request->all(),
                 'status' => 422,
-            ], 422);
+            ], 422);   
         }
 
         try {

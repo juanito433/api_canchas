@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\penalty;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -21,14 +23,38 @@ class PenaltyController extends Controller
     //obtener una penalización por su id
     public function show(Request $request)
     {
-        $penalty = penalty::find($request->id);
-        if (!$penalty) {
+        // Obtener el ID del usuario desde la ruta
+        $userId = $request->route('id');
+
+        // 1. Encontrar al usuario
+        $user = User::find($userId);
+        if (!$user) {
             return response()->json([
-                'message' => 'Penalización no encontrada',
+                'message' => 'Usuario no encontrado',
                 'status' => 404,
             ], 404);
         }
-        return response()->json($penalty, 200);
+
+        // 2. Obtener las penalizaciones ACTIVAS (cuya fecha de expiración es hoy o en el futuro)
+        $activePenalties = Penalty::where('user_id', $userId)
+            ->whereDate('expiration_date', '>=', Carbon::now()->toDateString())
+            ->orderBy('expiration_date', 'desc') // Ordenar por la fecha de expiración más lejana
+            ->get();
+
+        if ($activePenalties->isEmpty()) {
+            return response()->json([
+                'total_penalties' => 0,
+                'latest_expiration' => null,
+            ], 200);
+        }
+
+        // 3. Devolver el total de penalizaciones activas y la fecha de expiración más lejana
+        $latestExpiration = $activePenalties->first()->expiration_date;
+
+        return response()->json([
+            'total_penalties' => $activePenalties->count(),
+            'latest_expiration' => $latestExpiration,
+        ], 200);
     }
     //asignar una penalización a un usuario con el role de member
     public function store(Request $request)
@@ -116,4 +142,3 @@ class PenaltyController extends Controller
         ], 200);
     }
 }
-
