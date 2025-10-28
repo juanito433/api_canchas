@@ -55,7 +55,7 @@ class CancelExpiredReservations extends Command
                 // 4.1. Actualizar la reserva
                 $reservation->update([
                     'status' => 'Penalizada', // Más descriptivo que 'Cancelado' si fue por el sistema
-                    'confirmation' => 'Cancelada'
+                    'confirmation' => 'Expirada'
                 ]);
 
                 // 4.2. Crear la penalización
