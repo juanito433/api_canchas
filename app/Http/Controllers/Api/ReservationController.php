@@ -68,10 +68,6 @@ class ReservationController extends Controller
         ]);
     }
 
-
-
-
-
     //Función para visualizar una sola reservación
     public function show(Request $request)
     {
@@ -135,8 +131,6 @@ class ReservationController extends Controller
             'status' => 'required|string',
         ]);
 
-        Log::info('Payload recibido:', $request->all());
-
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'Error al validar los datos.',
@@ -147,10 +141,44 @@ class ReservationController extends Controller
         }
 
         try {
-            // === 2️⃣ Crear la reserva dentro de una transacción para seguridad ===
             $reservation = DB::transaction(function () use ($request) {
 
-                // Buscar el horario y bloquearlo para evitar reservas duplicadas
+                // === 2️⃣ Obtener horario de la nueva reserva ===
+                $newSchedule = Schedules::findOrFail($request->schedule_id);
+
+                // === 3️⃣ Verificar si el usuario tiene reservas activas que se solapen ===
+                $conflictingReservation = Reservation::where('user_id', $request->user_id)
+                    ->where('date', $request->date)
+                    ->where('status', '!=', 'Cancelada')
+                    ->whereHas('schedule', function ($query) use ($newSchedule) {
+                        $query->where(function ($q) use ($newSchedule) {
+                            $q->where('start_time', '<', $newSchedule->end_time)
+                                ->where('end_time', '>', $newSchedule->start_time);
+                        });
+                    })
+                    ->first();
+
+                if ($conflictingReservation) {
+                    $schedule = $conflictingReservation->schedule;
+                    $sportCourt = $schedule->sportCourt;
+                    $mode = $schedule->mode;
+                    $sport = $sportCourt->sport;
+
+                    return response()->json([
+                        'message' => 'Ya tienes otra reserva que se solapa con este horario. Por favor elige otro.',
+                        'conflict' => [
+                            'folio' => $schedule->id,
+                            'start_time' => $schedule->start_time,
+                            'end_time' => $schedule->end_time,
+                            'sport' => $sport->name ?? 'Deporte desconocido',
+                            'mode' => $mode->name ?? 'Modalidad desconocida',
+                        ],
+                        'status' => 409,
+                    ], 409);
+                }
+
+
+                // === 4️⃣ Bloquear horario y crear reserva ===
                 $schedule = Schedules::where('id', $request->schedule_id)
                     ->where('status', 'Disponible')
                     ->lockForUpdate()
@@ -160,7 +188,6 @@ class ReservationController extends Controller
                     throw new \Exception('Horario no disponible o ya reservado.');
                 }
 
-                // Crear la reserva
                 $reservation = Reservation::create([
                     'user_id' => $request->user_id,
                     'schedule_id' => $request->schedule_id,
@@ -170,21 +197,24 @@ class ReservationController extends Controller
                     'status' => $request->status,
                 ]);
 
-                // Cambiar el estado del horario a ocupado
+                // Cambiar estado del horario
                 $schedule->status = 'Ocupado';
                 $schedule->save();
 
                 return $reservation;
             });
 
-            // === 3️⃣ Respuesta exitosa ===
+            // === 5️⃣ Verificar si se recibió un conflicto desde la transacción ===
+            if ($reservation instanceof \Illuminate\Http\JsonResponse && $reservation->getStatusCode() === 409) {
+                return $reservation;
+            }
+
             return response()->json([
                 'message' => 'Reservación registrada correctamente.',
                 'reservation' => $reservation,
                 'status' => 201,
             ], 201);
         } catch (\Exception $e) {
-            Log::error('Error creando reservación:', ['error' => $e->getMessage()]);
             return response()->json([
                 'message' => 'Error al registrar la reservación.',
                 'error' => $e->getMessage(),
@@ -192,8 +222,6 @@ class ReservationController extends Controller
             ], 500);
         }
     }
-
-
 
 
     //cancelar la reservación
