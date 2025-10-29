@@ -122,7 +122,7 @@ Route::put('cancel/reservation/{id}', [ReservationController::class, 'cancelRese
 //Ruta para obtener los datos para el formulario de las reservaciones; 
 Route::get('/reservations/options/{id}', [ReservationController::class, 'getReservationOptions']);
 /* Reservacion del dia */
-Route::get('/reservations/today', [ReservationController::class, 'todayReservations']);
+Route::get('/reservations/today/{id}', [ReservationController::class, 'todayReservations']);
 
 
 /* Historial */

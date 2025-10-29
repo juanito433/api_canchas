@@ -42,26 +42,33 @@ class ReservationController extends Controller
     /* Reservaciones del dia, se cunetas vcunatas hay */
     public function todayReservations(Request $request)
     {
-        $userId = $request->user()->id; // Usuario autenticado
-        $today = now()->format('Y-m-d');
+        // ✅ Obtener directamente el ID del usuario desde la solicitud
+        $userId = $request->id;
 
-        $reservations = Reservation::with([
-            'schedule.sportcourt.sport',
-            'schedule.mode',
-        ])
+        // ✅ Obtener la fecha y hora actual
+        $today = now()->format('Y-m-d');
+        $currentTime = now()->format('H:i:s');
+
+        // ✅ Consultar las reservas activas del día (no terminadas)
+        $reservations = Reservation::with(['schedule'])
             ->where('user_id', $userId)
             ->where('date', $today)
+            ->whereHas('schedule', function ($query) use ($currentTime) {
+                // Filtrar solo las reservas cuyo horario de fin sea mayor que la hora actual
+                $query->where('end_time', '>', $currentTime);
+            })
             ->get();
 
-        $reservations->each(function ($reservation) {
-            $teammateIds = json_decode($reservation->teammates, true) ?? [];
-            $reservation->teammates_data = !empty($teammateIds)
-                ? User::whereIn('id', $teammateIds)->get(['id', 'name'])
-                : [];
-        });
+        // ✅ Contar solo las reservas activas
+        $countActive = $reservations->count();
 
-        return response()->json($reservations);
+        // ✅ Retornar solo el número de reservas activas
+        return response()->json([
+            'total_reservas_activas_hoy' => $countActive,
+        ]);
     }
+
+
 
 
 
@@ -136,7 +143,7 @@ class ReservationController extends Controller
                 'errors' => $validator->errors(),
                 'data_recibida' => $request->all(),
                 'status' => 422,
-            ], 422);   
+            ], 422);
         }
 
         try {

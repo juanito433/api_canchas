@@ -43,7 +43,7 @@ class CancelExpiredReservations extends Command
             try {
                 // Usamos la lógica de la corrección anterior: fecha de reserva + hora de fin del schedule.
                 $reservationEnd = Carbon::parse($reservation->date)
-                    ->setTimeFromTimeString($reservation->schedule->end_time);
+                    ->setTimeFromTimeString($reservation->schedule->start_time);
             } catch (\Exception $e) {
                 $this->error("Error al parsear el tiempo para la Reserva ID {$reservation->id}: " . $e->getMessage());
                 continue;

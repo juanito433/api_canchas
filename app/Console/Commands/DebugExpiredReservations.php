@@ -33,7 +33,7 @@ class DebugExpiredReservations extends Command
             }
 
             $reservationEnd = Carbon::parse($res->date)
-                ->setTimeFromTimeString($res->schedule->end_time);
+                ->setTimeFromTimeString($res->schedule->start_time);
 
             $this->info("Reserva ID {$res->id}: fecha {$res->date}, hora fin {$res->schedule->end_time}, combinada: {$reservationEnd->toDateTimeString()}");
 
