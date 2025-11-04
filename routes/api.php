@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\SvgController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\NotificationController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -162,3 +163,9 @@ Route::get('/reports/sport-usage', [SvgController::class, 'generateSvgChart']);
 Route::post('/auth/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail']);
 /* reset de contraseñas  */
 Route::post('/auth/reset-password', [ResetPasswordController::class, 'reset']);
+
+
+/* Notificaciones */
+
+Route::post('/save-push-token', [NotificationController::class, 'savePushToken']);
+Route::post('/send-test-notification', [NotificationController::class, 'sendTestNotification']);

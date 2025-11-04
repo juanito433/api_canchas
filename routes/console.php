@@ -15,3 +15,8 @@ Schedule::command('reservations:cancel-expired')
     // ->onOneServer() // Recomendado para entornos de producción con múltiples servidores
     ->environments(['local', 'production']) // Aplicar solo en estos entornos, o eliminar esta línea para que corra en todos.
     ->runInBackground(); // (Opcional) Recomendado si tienes varios comandos scheduler
+
+Schedule::command('notify:pending-reservations')
+    ->everyTenMinutes()
+    ->environments(['local', 'production'])
+    ->runInBackground();
