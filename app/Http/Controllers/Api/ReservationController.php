@@ -143,10 +143,10 @@ class ReservationController extends Controller
         try {
             $reservation = DB::transaction(function () use ($request) {
 
-                // === 2️⃣ Obtener horario de la nueva reserva ===
+                // === 2️⃣ Obtener el horario que se desea reservar ===
                 $newSchedule = Schedules::findOrFail($request->schedule_id);
 
-                // === 3️⃣ Verificar si el usuario tiene reservas activas que se solapen ===
+                // === 3️⃣ Verificar si el mismo usuario ya tiene una reserva que se solape ===
                 $conflictingReservation = Reservation::where('user_id', $request->user_id)
                     ->where('date', $request->date)
                     ->where('status', '!=', 'Cancelada')
@@ -158,6 +158,7 @@ class ReservationController extends Controller
                     })
                     ->first();
 
+                // Si existe una reserva que genera conflicto, se devuelve su información
                 if ($conflictingReservation) {
                     $schedule = $conflictingReservation->schedule;
                     $sportCourt = $schedule->sportCourt;
@@ -167,18 +168,19 @@ class ReservationController extends Controller
                     return response()->json([
                         'message' => 'Ya tienes otra reserva que se solapa con este horario. Por favor elige otro.',
                         'conflict' => [
-                            'folio' => $schedule->id,
+                            'folio' => $conflictingReservation->id,
                             'start_time' => $schedule->start_time,
                             'end_time' => $schedule->end_time,
                             'sport' => $sport->name ?? 'Deporte desconocido',
                             'mode' => $mode->name ?? 'Modalidad desconocida',
+                            'court' => $sportCourt->court_number ?? 'Cancha desconocida',
+                            'date' => $conflictingReservation->date,
                         ],
                         'status' => 409,
                     ], 409);
                 }
 
-
-                // === 4️⃣ Bloquear horario y crear reserva ===
+                // === 4️⃣ Verificar y bloquear horario disponible ===
                 $schedule = Schedules::where('id', $request->schedule_id)
                     ->where('status', 'Disponible')
                     ->lockForUpdate()
@@ -188,6 +190,7 @@ class ReservationController extends Controller
                     throw new \Exception('Horario no disponible o ya reservado.');
                 }
 
+                // === 5️⃣ Crear la nueva reserva ===
                 $reservation = Reservation::create([
                     'user_id' => $request->user_id,
                     'schedule_id' => $request->schedule_id,
@@ -197,21 +200,28 @@ class ReservationController extends Controller
                     'status' => $request->status,
                 ]);
 
-                // Cambiar estado del horario
+                // Cambiar estado del horario a "Ocupado"
                 $schedule->status = 'Ocupado';
                 $schedule->save();
 
                 return $reservation;
             });
 
-            // === 5️⃣ Verificar si se recibió un conflicto desde la transacción ===
+            // === 6️⃣ Si se devolvió un conflicto ===
             if ($reservation instanceof \Illuminate\Http\JsonResponse && $reservation->getStatusCode() === 409) {
                 return $reservation;
             }
 
+            // === 7️⃣ Respuesta exitosa ===
             return response()->json([
                 'message' => 'Reservación registrada correctamente.',
-                'reservation' => $reservation,
+                'reservation' => [
+                    'folio' => $reservation->id, // ✅ ID de la reserva creada
+                    'user_id' => $reservation->user_id,
+                    'schedule_id' => $reservation->schedule_id,
+                    'date' => $reservation->date,
+                    'status' => $reservation->status,
+                ],
                 'status' => 201,
             ], 201);
         } catch (\Exception $e) {
@@ -222,6 +232,7 @@ class ReservationController extends Controller
             ], 500);
         }
     }
+
 
 
     //cancelar la reservación
