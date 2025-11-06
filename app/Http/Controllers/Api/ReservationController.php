@@ -565,4 +565,60 @@ class ReservationController extends Controller
             ], 500);
         }
     }
+    public function confirm(Request $request, $id)
+    {
+        $reservation = Reservation::find($id);
+
+        if (!$reservation) {
+            return response()->json([
+                'message' => 'Reservación no encontrada.'
+            ], 404);
+        }
+
+        // Verificar si ya fue procesada
+        if ($reservation->confirmation === 'Confirmada') {
+            return response()->json([
+                'message' => 'Esta reservación ya fue confirmada previamente.'
+            ], 400);
+        }
+
+        $reservation->confirmation = 'Confirmada';
+        $reservation->status = 'Confirmada';
+        $reservation->save();
+
+        return response()->json([
+            'message' => 'Reservación confirmada exitosamente.',
+            'reservation' => $reservation
+        ], 200);
+    }
+
+    /**
+     * Cancelar una reservación
+     */
+    public function cancel(Request $request, $id)
+    {
+        $reservation = Reservation::find($id);
+
+        if (!$reservation) {
+            return response()->json([
+                'message' => 'Reservación no encontrada.'
+            ], 404);
+        }
+
+        // Verificar si ya fue procesada
+        if ($reservation->status === 'Cancelada') {
+            return response()->json([
+                'message' => 'Esta reservación ya fue cancelada previamente.'
+            ], 400);
+        }
+
+        $reservation->confirmation = 'Cancelada';
+        $reservation->status = 'Cancelada';
+        $reservation->save();
+
+        return response()->json([
+            'message' => 'Reservación cancelada exitosamente.',
+            'reservation' => $reservation
+        ], 200);
+    }
 }

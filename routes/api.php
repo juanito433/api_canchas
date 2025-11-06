@@ -169,3 +169,10 @@ Route::post('/auth/reset-password', [ResetPasswordController::class, 'reset']);
 
 Route::post('/save-push-token', [NotificationController::class, 'savePushToken']);
 Route::post('/send-test-notification', [NotificationController::class, 'sendTestNotification']);
+
+
+// Confirmar reservación
+Route::put('/reservations/{id}/confirm', [ReservationController::class, 'confirm']);
+
+// Cancelar reservación
+Route::put('/reservations/{id}/cancel', [ReservationController::class, 'cancel']);
