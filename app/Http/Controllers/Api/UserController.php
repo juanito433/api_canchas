@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\UserDeletedMail;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
@@ -72,31 +73,45 @@ class UserController extends Controller
     //actualizar un usuario, solo se actualizara el username, phone y photo_url}
     public function update(Request $request, $id)
     {
-        // Validar los datos de entrada
+        // Buscar usuario
+        $user = User::find($id);
+        if (!$user) {
+            return response()->json([
+                'message' => 'Usuario no encontrado',
+                'status' => 404,
+            ], 404);
+        }
+
+        // Validar los campos
         $request->validate([
             'username' => 'required|string|max:255|unique:users,username,' . $id,
-            'phone' => 'required|string|max:15',
-            'photo_url' => 'nullable|url',
+            'phone' => 'nullable|string|max:15',
+            'photo_url' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        $user = User::find($id);
-        //si no se encuentra el usuario, retornar un mensaje
-        if (!$user) {
-            return response()->json(['message' => 'User not found'], 404);
+        // Procesar imagen si fue enviada
+        if ($request->hasFile('photo_url')) {
+            // Eliminar imagen anterior si existe
+            if ($user->photo_url && Storage::disk('public')->exists(str_replace('/storage/', '', $user->photo_url))) {
+                Storage::disk('public')->delete(str_replace('/storage/', '', $user->photo_url));
+            }
+
+            // Guardar nueva imagen en "profiles"
+            $imagePath = $request->file('photo_url')->store('profiles', 'public');
+            $imageUrl = Storage::url($imagePath); // genera: /storage/profiles/imagen.jpg
+            $user->photo_url = $imageUrl;
         }
 
-        // Actualizar los campos permitidos
-        $user->username = $request->username;
-        $user->phone = $request->phone;
-        if ($request->has('photo_url')) {
-            $user->photo_url = $request->photo_url;
-        }
+        // Actualizar otros datos
+        $user->username = $request->input('username', $user->username);
+        $user->phone = $request->input('phone', $user->phone);
         $user->save();
 
         return response()->json([
-            'message' => 'User updated successfully',
-            'user' => $user
-        ]);
+            'message' => 'Usuario actualizado correctamente',
+            'status' => 200,
+            'user' => $user,
+        ], 200);
     }
 
     public function destroy($id)
