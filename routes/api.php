@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\HistoryController;
 use App\Http\Controllers\Api\modeController;
@@ -176,3 +177,6 @@ Route::put('/reservations/{id}/confirm', [ReservationController::class, 'confirm
 
 // Cancelar reservación
 Route::put('/reservations/{id}/cancel', [ReservationController::class, 'cancel']);
+
+/* Estadisticas del admin */
+Route::get('/estadisticas_admin', [AdminController::class, 'estadisticas']);
