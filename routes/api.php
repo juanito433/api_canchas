@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\HistoryController;
 use App\Http\Controllers\Api\modeController;
+use App\Http\Controllers\Api\NoticeController;
 use App\Http\Controllers\Api\PenaltyController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\ReservationController;
@@ -180,3 +181,15 @@ Route::put('/reservations/{id}/cancel', [ReservationController::class, 'cancel']
 
 /* Estadisticas del admin */
 Route::get('/estadisticas_admin', [AdminController::class, 'estadisticas']);
+
+
+
+
+
+/* Notifications */
+// Listar todas las notificaciones
+Route::get('/notices', [NoticeController::class, 'index']);
+/* publicar notice */
+Route::post('/notices/create', [NoticeController::class, 'store']);
+// Mostrar detalle de una notificación
+Route::get('/notices/{id}', [NoticeController::class, 'show']);
