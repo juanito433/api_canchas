@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\penalty;
+use App\Models\Penalty;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -11,22 +11,22 @@ use Illuminate\Support\Facades\Validator;
 
 class PenaltyController extends Controller
 {
-    //obtener todas la penalizaciones 
+    /**
+     * 🔹 Obtener todas las penalizaciones (con usuario relacionado)
+     */
     public function index()
     {
-        $penalty = Penalty::all();
-        //traer la info del usuario relacionado con la penalización
-        $penalty->load('user');
-
-        return response()->json($penalty, 200);
+        $penalties = Penalty::with('user')->orderBy('created_at', 'desc')->get();
+        return response()->json($penalties, 200);
     }
-    //obtener una penalización por su id
+
+    /**
+     * 🔹 Mostrar penalizaciones activas de un usuario (por ID)
+     */
     public function show(Request $request)
     {
-        // Obtener el ID del usuario desde la ruta
         $userId = $request->route('id');
 
-        // 1. Encontrar al usuario
         $user = User::find($userId);
         if (!$user) {
             return response()->json([
@@ -35,10 +35,10 @@ class PenaltyController extends Controller
             ], 404);
         }
 
-        // 2. Obtener las penalizaciones ACTIVAS (cuya fecha de expiración es hoy o en el futuro)
+        // Penalizaciones activas (no vencidas)
         $activePenalties = Penalty::where('user_id', $userId)
             ->whereDate('expiration_date', '>=', Carbon::now()->toDateString())
-            ->orderBy('expiration_date', 'desc') // Ordenar por la fecha de expiración más lejana
+            ->orderBy('expiration_date', 'desc')
             ->get();
 
         if ($activePenalties->isEmpty()) {
@@ -48,7 +48,6 @@ class PenaltyController extends Controller
             ], 200);
         }
 
-        // 3. Devolver el total de penalizaciones activas y la fecha de expiración más lejana
         $latestExpiration = $activePenalties->first()->expiration_date;
 
         return response()->json([
@@ -56,31 +55,29 @@ class PenaltyController extends Controller
             'latest_expiration' => $latestExpiration,
         ], 200);
     }
-    //asignar una penalización a un usuario con el role de member
+
+    /**
+     * 🔹 Crear una nueva penalización (solo admin puede hacerlo)
+     */
     public function store(Request $request)
     {
-        // Verificar si el usuario tiene el rol de admin
+        // Verificar que el usuario autenticado sea admin
         if ($request->user()->role !== 'admin') {
             return response()->json([
                 'message' => 'No tienes permiso para asignar penalizaciones',
                 'status' => 403,
             ], 403);
         }
-        // Verificar si el usuario penalizado es un member
-        if ($request->user_id && $request->user()->role !== 'member') {
-            return response()->json([
-                'message' => 'El usuario penalizado debe tener el rol de member',
-                'status' => 403,
-            ], 403);
-        }
 
+        // Validar datos de entrada
         $validator = Validator::make($request->all(), [
-            'user_id' => 'required|integer',
+            'user_id' => 'required|integer|exists:users,id',
             'cause' => 'required|string|max:255',
             'date' => 'required|date',
             'expiration_date' => 'required|date|after_or_equal:date',
             'penalty' => 'required|string|max:255',
         ]);
+
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'Error al validar los datos',
@@ -88,19 +85,29 @@ class PenaltyController extends Controller
                 'status' => 422,
             ], 422);
         }
-        $penalty = penalty::create([
+
+        // Crear penalización
+        $penalty = Penalty::create([
             'user_id' => $request->user_id,
             'cause' => $request->cause,
             'date' => $request->date,
             'expiration_date' => $request->expiration_date,
             'penalty' => $request->penalty,
         ]);
-        return response()->json($penalty, 201);
+
+        return response()->json([
+            'message' => 'Penalización creada correctamente',
+            'data' => $penalty
+        ], 201);
     }
-    //actualizar una penalización
+
+    /**
+     * 🔹 Actualizar penalización existente
+     */
     public function update(Request $request)
     {
-        $penalty = penalty::find($request->id);
+        $penalty = Penalty::find($request->id);
+
         if (!$penalty) {
             return response()->json([
                 'message' => 'Penalización no encontrada',
@@ -114,6 +121,7 @@ class PenaltyController extends Controller
             'expiration_date' => 'required|date|after_or_equal:date',
             'penalty' => 'required|string|max:255',
         ]);
+
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'Error al validar los datos',
@@ -123,19 +131,29 @@ class PenaltyController extends Controller
         }
 
         $penalty->update($request->all());
-        return response()->json($penalty, 200);
+
+        return response()->json([
+            'message' => 'Penalización actualizada correctamente',
+            'data' => $penalty
+        ], 200);
     }
-    //eliminar una penalización
+
+    /**
+     * 🔹 Eliminar penalización
+     */
     public function destroy(Request $request)
     {
-        $penalty = penalty::find($request->id);
+        $penalty = Penalty::find($request->id);
+
         if (!$penalty) {
             return response()->json([
                 'message' => 'Penalización no encontrada',
                 'status' => 404,
             ], 404);
         }
+
         $penalty->delete();
+
         return response()->json([
             'message' => 'Penalización eliminada correctamente',
             'status' => 200,

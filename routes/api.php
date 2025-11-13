@@ -149,8 +149,9 @@ Route::get('/suggestions/issuse/{issuse}', [suggestionsController::class, 'getSu
 //Penalizaciones 
 Route::get('/penalties', [PenaltyController::class, 'index']);
 Route::get('/penalty/{id}', [PenaltyController::class, 'show']);
-
-
+Route::post('/penalties', [PenaltyController::class, 'store']);
+Route::put('/penalties/{id}', [PenaltyController::class, 'update']);
+Route::delete('/penalties/{id}', [PenaltyController::class, 'destroy']);
 
 
 /*  Reportes */
