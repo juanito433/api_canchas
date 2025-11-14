@@ -86,8 +86,8 @@ class UserController extends Controller
         // VALIDACIÓN COMPLETA
         // ===========================
         $request->validate([
-            'email'      => 'required|email|max:255|unique:users,email,' . $id,
-            'username'   => 'required|string|max:255|unique:users,username,' . $id,
+            'email'      => 'nullable|email|max:255|unique:users,email,' . $id,
+            'username'   => 'nullable|string|max:255|unique:users,username,' . $id,
             'phone'      => 'nullable|string|max:15',
             'photo_url'  => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
 
