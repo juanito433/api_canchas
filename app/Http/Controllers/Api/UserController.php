@@ -82,35 +82,55 @@ class UserController extends Controller
             ], 404);
         }
 
-        // Validar los campos
+        // ===========================
+        // VALIDACIÓN COMPLETA
+        // ===========================
         $request->validate([
-            'username' => 'required|string|max:255|unique:users,username,' . $id,
-            'phone' => 'nullable|string|max:15',
-            'photo_url' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'email'      => 'required|email|max:255|unique:users,email,' . $id,
+            'username'   => 'required|string|max:255|unique:users,username,' . $id,
+            'phone'      => 'nullable|string|max:15',
+            'photo_url'  => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+
+            // Si viene contraseña, debe confirmarse
+            'password'   => 'nullable|string|min:8|confirmed',
         ]);
 
-        // Procesar imagen si fue enviada
+        // ===========================
+        // ACTUALIZAR CAMPOS BÁSICOS
+        // ===========================
+        $user->email    = $request->input('email', $user->email);
+        $user->username = $request->input('username', $user->username);
+        $user->phone    = $request->input('phone', $user->phone);
+
+        // ===========================
+        // CAMBIO OPCIONAL DE PASSWORD
+        // ===========================
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        // ===========================
+        // PROCESAR IMAGEN
+        // ===========================
         if ($request->hasFile('photo_url')) {
-            // Eliminar imagen anterior si existe
+
+            // eliminar imagen anterior
             if ($user->photo_url && Storage::disk('public')->exists(str_replace('/storage/', '', $user->photo_url))) {
                 Storage::disk('public')->delete(str_replace('/storage/', '', $user->photo_url));
             }
 
-            // Guardar nueva imagen en "profiles"
-            $imagePath = $request->file('photo_url')->store('profiles', 'public');
-            $imageUrl = Storage::url($imagePath); // genera: /storage/profiles/imagen.jpg
-            $user->photo_url = $imageUrl;
+            // guardar nueva
+            $path = $request->file('photo_url')->store('profiles', 'public');
+            $user->photo_url = Storage::url($path);
         }
 
-        // Actualizar otros datos
-        $user->username = $request->input('username', $user->username);
-        $user->phone = $request->input('phone', $user->phone);
+        // Guardar cambios
         $user->save();
 
         return response()->json([
             'message' => 'Usuario actualizado correctamente',
-            'status' => 200,
-            'user' => $user,
+            'status'  => 200,
+            'user'    => $user,
         ], 200);
     }
 
