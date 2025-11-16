@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Reporte de Reservas</title>
+    <title>Reporte por Deporte</title>
 
     <style>
         body {
@@ -47,7 +47,6 @@
             text-align: center;
         }
 
-        /* 🔥 SALTO DE PÁGINA REAL PARA DOMPDF */
         .page-break {
             page-break-before: always;
         }
@@ -58,29 +57,23 @@
 
     <header>
         <h1>Haciendas Family & Fitness Club</h1>
-        <h3>Reporte General de Reservas</h3>
+        <h3>Reporte de Reservas por Deporte</h3>
     </header>
 
     <p><strong>Fecha de generación:</strong> {{ now()->format('d/m/Y H:i') }}</p>
+    <p><strong>Deporte seleccionado:</strong> {{ $sportName }}</p>
     <p><strong>Período:</strong> {{ $startDate }} a {{ $endDate }}</p>
     <p><strong>Total de reservas:</strong> {{ $reservations->count() }}</p>
-    <p><strong>Total de deportes con reservas:</strong> {{ count($reservasPorDeporte) }}</p>
 
     <hr>
 
-    {{-- TABLAS POR CADA DEPORTE --}}
-    @foreach($reservasPorDeporte as $deporte => $items)
-
-    <h2 class="section-title">Deporte: {{ $deporte }}</h2>
-
-    <p><strong>Total de reservas:</strong> {{ $items->count() }}</p>
+    <h2 class="section-title">Reservas del deporte: {{ $sportName }}</h2>
 
     <table>
         <thead>
             <tr>
                 <th>Folio Reserva</th>
                 <th>Folio Usuario</th>
-                <th>Deporte</th>
                 <th>Cancha</th>
                 <th>Fecha Reservada</th>
                 <th>Fecha de Registro</th>
@@ -91,11 +84,10 @@
         </thead>
 
         <tbody>
-            @foreach ($items as $r)
+            @foreach ($reservations as $r)
             <tr>
                 <td>{{ $r->id }}</td>
                 <td>{{ $r->user->id }}</td>
-                <td>{{ $r->schedule->sportcourt->sport->name }}</td>
                 <td>{{ $r->schedule->sportcourt->num_sportcourt }}</td>
                 <td>{{ $r->date }}</td>
                 <td>{{ $r->created_at->format('Y-m-d H:i') }}</td>
@@ -107,12 +99,9 @@
         </tbody>
     </table>
 
-    @endforeach
-
-    <!-- 🔥 FORZAR HOJA NUEVA ANTES DE LA GRÁFICA -->
     <div class="page-break"></div>
 
-    <h2 class="section-title">Gráfica global por deporte</h2>
+    <h2 class="section-title">Gráfica de uso por cancha</h2>
 
     <div class="chart">
         <img src="data:image/png;base64,{{ $chartImage }}" style="width: 80%; height: auto;">

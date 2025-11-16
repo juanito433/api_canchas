@@ -156,6 +156,10 @@ Route::delete('/penalties/{id}', [PenaltyController::class, 'destroy']);
 
 /*  Reportes */
 Route::get('/reports/reservations', [ReportController::class, 'GenerateReport']);
+/* Reportes por deporte */
+Route::get('/reports/sport', [ReportController::class, 'ReportBySport']);
+/* Reportes por deporte y cancha */
+Route::get('/reports/sport-court', [ReportController::class, 'ReportBySportAndCourt']);
 
 /* Grafica */
 Route::get('/reports/sport-usage', [SvgController::class, 'generateSvgChart']);
