@@ -114,6 +114,7 @@ class SportCourtController extends Controller
 
         $validator = Validator::make($request->all(), [
             'num_sportcourt' => 'required',
+            'sport_id' => 'required|exists:sports,id',
         ]);
 
         if ($validator->fails()) {
@@ -125,6 +126,7 @@ class SportCourtController extends Controller
         }
 
         $court->num_sportcourt = $request->num_sportcourt;
+        $court->sport_id = $request->sport_id;
         $court->save();
 
         return response()->json([
@@ -133,6 +135,7 @@ class SportCourtController extends Controller
             'status' => 200,
         ], 200);
     }
+
     // Eliminar una cancha
     public function destroy($id)
     {

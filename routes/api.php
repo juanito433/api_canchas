@@ -89,9 +89,9 @@ Route::get('/sport/modes/{id}', [modeController::class, 'showModesBySport']);
 // Crear una nueva modalidad
 Route::post('/mode', [modeController::class, 'store']);
 // Actualizar una modalidad
-Route::put('/mode/{id}', [modeController::class, 'update'])->middleware('auth:sanctum');
+Route::put('/mode/{id}', [modeController::class, 'update']);
 // Eliminar una modalidad
-Route::delete('/mode/{id}', [modeController::class, 'destroy'])->middleware('auth:sanctum');
+Route::delete('/mode/{id}', [modeController::class, 'destroy']);
 
 
 
