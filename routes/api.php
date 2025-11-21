@@ -28,7 +28,7 @@ use Illuminate\Support\Facades\Route;
  */ // Iniciar sesión
 Route::post('/login', [AuthController::class, 'login']);
 // Cerrar sesión
-Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+Route::post('/logout', [AuthController::class, 'logout']);
 
 
 /* Usuarios*/
