@@ -126,6 +126,8 @@ Route::put('cancel/reservation/{id}', [ReservationController::class, 'cancelRese
 Route::get('/reservations/options/{id}', [ReservationController::class, 'getReservationOptions']);
 /* Reservacion del dia */
 Route::get('/reservations/today/{id}', [ReservationController::class, 'todayReservations']);
+/* Reservaciones filtradas para el admin */
+Route::get('/reservations/admin/all', [ReservationController::class, 'allFiltered']);
 
 
 /* Historial */

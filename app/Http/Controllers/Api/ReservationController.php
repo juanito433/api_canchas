@@ -597,6 +597,7 @@ class ReservationController extends Controller
      */
     public function cancel(Request $request, $id)
     {
+        // Buscar la reservación
         $reservation = Reservation::find($id);
 
         if (!$reservation) {
@@ -605,20 +606,160 @@ class ReservationController extends Controller
             ], 404);
         }
 
-        // Verificar si ya fue procesada
+        // Validar si ya está cancelada
         if ($reservation->status === 'Cancelada') {
             return response()->json([
                 'message' => 'Esta reservación ya fue cancelada previamente.'
             ], 400);
         }
 
+        // Cambiar el estado de la reservación
         $reservation->confirmation = 'Cancelada';
         $reservation->status = 'Cancelada';
         $reservation->save();
 
+        // --- IMPORTANTE ---
+        // Liberar el horario para que vuelva a estar disponible
+        if ($reservation->schedule_id) {
+            $schedule = schedules::find($reservation->schedule_id);
+
+            if ($schedule) {
+                $schedule->status = 'Disponible';
+                $schedule->save();
+            }
+        }
+
         return response()->json([
-            'message' => 'Reservación cancelada exitosamente.',
+            'message' => 'Reservación cancelada exitosamente. El horario ahora está disponible.',
             'reservation' => $reservation
         ], 200);
+    }
+
+    public function allFiltered(Request $request)
+    {
+        $query = Reservation::with([
+            'user',
+            'schedule.sportcourt.sport',
+            'schedule.sportcourt',
+            'schedule.mode'
+        ]);
+
+        /* ------------------------------------------
+       FILTRO: POR DEPORTE
+    -------------------------------------------*/
+        if ($request->filled('sport_id')) {
+            $query->whereHas('schedule.sportcourt', function ($q) use ($request) {
+                $q->where('sport_id', $request->sport_id);
+            });
+        }
+
+        /* ------------------------------------------
+       FILTRO: POR CANCHA
+    -------------------------------------------*/
+        if ($request->filled('court_id')) {
+            $query->whereHas('schedule', function ($q) use ($request) {
+                $q->where('sportcourt_id', $request->court_id);
+            });
+        }
+
+        /* ------------------------------------------
+       FILTRO: POR MODALIDAD
+    -------------------------------------------*/
+        if ($request->filled('mode_id')) {
+            $query->whereHas('schedule', function ($q) use ($request) {
+                $q->where('mode_id', $request->mode_id);
+            });
+        }
+
+        /* ------------------------------------------
+       FILTRO: FECHA EXACTA
+    -------------------------------------------*/
+        if ($request->filled('date')) {
+            $query->whereDate('date', $request->date);
+        }
+
+        /* ------------------------------------------
+       FILTRO: HOY
+    -------------------------------------------*/
+        if ($request->filled('today') && $request->today == 1) {
+            $query->whereDate('date', now()->toDateString());
+        }
+
+        /* ------------------------------------------
+       FILTRO: SEMANA COMPLETA
+    -------------------------------------------*/
+        if ($request->filled('week') && $request->week == 1) {
+            $query->whereBetween('date', [
+                now()->startOfWeek()->toDateString(),
+                now()->endOfWeek()->toDateString(),
+            ]);
+        }
+
+        /* ------------------------------------------
+       FILTRO: FECHAS PASADAS
+    -------------------------------------------*/
+        if ($request->filled('past') && $request->past == 1) {
+            $query->whereDate('date', '<', now()->toDateString());
+        }
+
+        /* ------------------------------------------
+       FILTRO: ESTADO (pendiente, confirmada, cancelada)
+    -------------------------------------------*/
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        /* ------------------------------------------
+       ORDENAMIENTO RECIENTE
+    -------------------------------------------*/
+        if ($request->filled('recent') && $request->recent == 1) {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        $reservations = $query->get();
+
+        /* ------------------------------------------
+        PROCESAR COMPAÑEROS
+    -------------------------------------------*/
+        $reservations->each(function ($reservation) {
+            $ids = json_decode($reservation->teammates, true);
+            $reservation->teammates_data =
+                (is_array($ids) && count($ids) > 0)
+                ? User::whereIn('id', $ids)->get(['id', 'name', 'lastname', 'lastname2'])
+                : [];
+        });
+
+        /* ------------------------------------------
+        RESPUESTA COMPLETA PARA EL FRONTEND
+    -------------------------------------------*/
+        $response = $reservations->map(function ($res) {
+            return [
+                'folio' => $res->id,
+                'usuario' => $res->user->name . ' ' . $res->user->lastname . ' ' . $res->user->lastname2,
+                'user_id' => $res->user_id,
+
+                'fecha' => $res->date,
+                'estado' => $res->status,
+                'confirmacion' => $res->confirmation,
+
+                'deporte' => $res->schedule->sportcourt->sport->name ?? null,
+                'cancha' => "Cancha " . $res->schedule->sportcourt->num_sportcourt,
+                'modalidad' => $res->schedule->mode->name,
+
+                'inicio' => $res->schedule->start_time,
+                'fin' => $res->schedule->end_time,
+
+                'companeros' => $res->teammates_data,
+            ];
+        });
+
+        return response()->json([
+            'filters_available' => [
+                'sports' => Sport::all(['id', 'name']),
+                'courts' => SportCourt::with('sport')->get(['id', 'sport_id', 'num_sportcourt']),
+                'modes' => Mode::all(['id', 'name']),
+            ],
+            'reservations' => $response,
+        ]);
     }
 }
