@@ -17,6 +17,6 @@ Schedule::command('reservations:cancel-expired')
     ->runInBackground(); // (Opcional) Recomendado si tienes varios comandos scheduler
 
 Schedule::command('notify:pending-reservations')
-    ->everyTenMinutes()
+    ->everyMinute()
     ->environments(['local', 'production'])
     ->runInBackground();

@@ -78,8 +78,16 @@ class User extends Authenticatable
         $this->notify(new ResetPasswordNotification($token));
     }
 
+    public function receivedNotices()
+    {
+        return $this->belongsToMany(Notice::class, 'notice_user')
+            ->withPivot('read_at')
+            ->withTimestamps();
+    }
+
+
     public function notices()
     {
-        return $this->hasMany(Notice::class);
+        return $this->hasMany(Notice::class, 'user_id');
     }
 }

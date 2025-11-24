@@ -25,4 +25,25 @@ class Notice extends Model
     {
         return $this->belongsTo(User::class);
     }
+    // Admin que creó la notificación
+    public function admin()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    // Usuarios que recibieron esta notificación ->withTimestamps();
+
+    public function recipients()
+    {
+        return $this->belongsToMany(User::class, 'notice_user')
+            ->using(\App\Models\NoticeUser::class)
+            ->withPivot('read_at')
+            ->withTimestamps();
+    }
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'notice_user')
+            ->withPivot('read_at')
+            ->withTimestamps();
+    }
 }
