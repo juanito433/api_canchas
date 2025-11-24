@@ -20,3 +20,8 @@ Schedule::command('notify:pending-reservations')
     ->everyMinute()
     ->environments(['local', 'production'])
     ->runInBackground();
+
+Schedule::command('reservations:check-finished')
+    ->everyMinute()
+    ->environments(['local', 'production'])
+    ->runInBackground();
