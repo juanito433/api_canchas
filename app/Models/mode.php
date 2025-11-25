@@ -13,6 +13,7 @@ class mode extends Model
         'name',
         'description',
         'color',
+        'duration',
     ];
     public function schedules()
     {

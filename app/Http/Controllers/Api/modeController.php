@@ -92,13 +92,14 @@ class modeController extends Controller
         return response()->json($mode, 200);
     }
 
-    //Crear una modalidad
+    // Crear una modalidad
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:255',
             'description' => 'required',
             'color' => 'nullable|string|max:20', // Validación del color
+            'duration' => 'required|integer|min:1', // Validación del duration
         ]);
 
         if ($validator->fails()) {
@@ -109,10 +110,11 @@ class modeController extends Controller
             ], 400);
         }
 
-        $mode = mode::create([
+        $mode = Mode::create([
             'name' => $request->name,
             'description' => $request->description,
-            'color' => $request->color, // Guardamos el color
+            'color' => $request->color,
+            'duration' => $request->duration, // Guardamos la duración
         ]);
 
         return response()->json($mode, 201);
@@ -121,7 +123,7 @@ class modeController extends Controller
     // Actualizar una modalidad
     public function update(Request $request)
     {
-        $mode = mode::find($request->id);
+        $mode = Mode::find($request->id);
         if (!$mode) {
             return response()->json([
                 'message' => 'Modalidad no encontrada',
@@ -133,6 +135,7 @@ class modeController extends Controller
             'name' => 'required|max:255',
             'description' => 'required',
             'color' => 'nullable|string|max:20', // Validación del color
+            'duration' => 'required|integer|min:1', // Validación del duration
         ]);
 
         if ($validator->fails()) {
@@ -146,7 +149,8 @@ class modeController extends Controller
         $mode->update([
             'name' => $request->name,
             'description' => $request->description,
-            'color' => $request->color, // Actualizamos el color
+            'color' => $request->color,
+            'duration' => $request->duration, // Actualizamos la duración
         ]);
 
         return response()->json([
