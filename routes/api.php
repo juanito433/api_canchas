@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\SportController;
 use App\Http\Controllers\Api\SportCourtController;
+use App\Http\Controllers\Api\StatisticController;
 use App\Http\Controllers\Api\SuggestionsController;
 use App\Http\Controllers\Api\SvgController;
 use App\Http\Controllers\Api\UserController;
@@ -200,3 +201,10 @@ Route::get('/notices', [NoticeController::class, 'index']);
 Route::post('/notices/create', [NoticeController::class, 'store']);
 // Mostrar detalle de una notificación
 Route::get('/notices/{id}', [NoticeController::class, 'show']);
+
+
+
+/* Estadistacas de sabana  */
+Route::get('/statistics/daily', [StatisticController::class,'dailyStatistics']);
+
+
