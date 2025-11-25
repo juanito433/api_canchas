@@ -34,6 +34,7 @@ class ScheduleController extends Controller
                 'num_court' => $court->num_sportcourt,
                 'sport' => $sport->name,
                 'mode' => $mode->name,
+                'mode_color' => $mode->color,
             ];
         });
 
@@ -222,7 +223,6 @@ class ScheduleController extends Controller
         // Obtener las canchas asociadas
         $courts = SportCourt::where('sport_id', $sport->id)->get();
 
-        // Si no hay canchas, devolver respuesta vacía pero con estado 200
         if ($courts->isEmpty()) {
             return response()->json([
                 'sport_id' => $sport->id,
@@ -235,10 +235,9 @@ class ScheduleController extends Controller
             ], 200);
         }
 
-        // Obtener los IDs de las canchas
         $courtIds = $courts->pluck('id');
 
-        // Obtener horarios y modos asociados
+        // Obtener horarios y modos asociados incluyendo el color
         $schedules = SportCourt::whereIn('sportcourts.id', $courtIds)
             ->leftJoin('schedules', 'sportcourts.id', '=', 'schedules.sportcourt_id')
             ->leftJoin('modes', 'schedules.mode_id', '=', 'modes.id')
@@ -250,7 +249,8 @@ class ScheduleController extends Controller
                 'schedules.start_time',
                 'schedules.end_time',
                 'schedules.status',
-                'modes.name as mode_name'
+                'modes.name as mode_name',
+                'modes.color as mode_color' // <--- agregado
             )
             ->orderBy('sportcourts.num_sportcourt')
             ->orderBy('schedules.start_time')
@@ -265,6 +265,7 @@ class ScheduleController extends Controller
                 'court_number' => $item->court_number,
                 'sport' => $sport->name,
                 'mode' => $item->mode_name,
+                'mode_color' => $item->mode_color, // <--- agregado
                 'status' => $item->status,
             ];
         });
