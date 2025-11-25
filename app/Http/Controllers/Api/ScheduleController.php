@@ -54,16 +54,14 @@ class ScheduleController extends Controller
         return response()->json($schedule, 200);
     }
 
-    // Registrar un nuevo horario
     public function storage(Request $request)
     {
-        // Validación inicial
+        // Validación inicial (sin end_time porque se calculará)
         $validator = Validator::make($request->all(), [
             'days' => 'required',
             'sportcourt_id' => 'required|integer',
             'mode_id' => 'required|integer',
             'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i|after:start_time',
         ]);
 
         if ($validator->fails()) {
@@ -74,20 +72,25 @@ class ScheduleController extends Controller
             ], 422);
         }
 
-        // Variables de entrada
-        $day = $request->days;
-        $court = $request->sportcourt_id;
-        $start = $request->start_time;
-        $end = $request->end_time;
+        // Obtener modalidad (para saber duración)
+        $mode = Mode::find($request->mode_id);
+        if (!$mode) {
+            return response()->json([
+                'message' => 'Modalidad no encontrada',
+                'status' => 404,
+            ], 404);
+        }
 
-        // Buscar horarios que se crucen con el nuevo rango
-        $conflict = schedules::where('days', $day)
-            ->where('sportcourt_id', $court)
-            ->where(function ($query) use ($start, $end) {
-                $query->where(function ($q) use ($start, $end) {
-                    $q->where('start_time', '<', $end)
-                        ->where('end_time', '>', $start);
-                });
+        // Calcular end_time usando la duración de la modalidad
+        $start = Carbon::createFromFormat('H:i', $request->start_time);
+        $end = (clone $start)->addHours($mode->duration)->format('H:i');
+
+        // Verificar conflictos
+        $conflict = schedules::where('days', $request->days)
+            ->where('sportcourt_id', $request->sportcourt_id)
+            ->where(function ($query) use ($request, $end) {
+                $query->where('start_time', '<', $end)
+                    ->where('end_time', '>', $request->start_time);
             })
             ->first();
 
@@ -95,16 +98,16 @@ class ScheduleController extends Controller
             return response()->json([
                 'message' => 'No se puede registrar el horario porque se cruza con otro existente.',
                 'conflict_schedule' => $conflict,
-                'status' => 409, // 409 = conflicto
+                'status' => 409,
             ], 409);
         }
 
-        // Si no hay conflictos, crear el nuevo horario
+        // Crear el nuevo horario
         $schedule = schedules::create([
-            'days' => $day,
-            'sportcourt_id' => $court,
+            'days' => $request->days,
+            'sportcourt_id' => $request->sportcourt_id,
             'mode_id' => $request->mode_id,
-            'start_time' => $start,
+            'start_time' => $request->start_time,
             'end_time' => $end,
             'status' => 'Disponible',
         ]);
@@ -117,7 +120,7 @@ class ScheduleController extends Controller
     }
 
 
-    // Actualizar un horario
+
     public function update(Request $request)
     {
         $schedule = schedules::find($request->id);
@@ -128,12 +131,12 @@ class ScheduleController extends Controller
             ], 404);
         }
 
+        // Validación (sin end_time porque se recalculará)
         $validator = Validator::make($request->all(), [
             'days' => 'required',
             'sportcourt_id' => 'required|integer',
             'mode_id' => 'required|integer',
-            'start_time' => 'required',
-            'end_time' => 'required',
+            'start_time' => 'required|date_format:H:i',
             'status' => 'required|string',
         ]);
 
@@ -145,7 +148,46 @@ class ScheduleController extends Controller
             ], 400);
         }
 
-        $schedule->update($request->all());
+        // Obtener modalidad nueva
+        $mode = Mode::find($request->mode_id);
+        if (!$mode) {
+            return response()->json([
+                'message' => 'Modalidad no encontrada',
+                'status' => 404,
+            ], 404);
+        }
+
+        // Calcular end_time nuevo
+        $start = Carbon::createFromFormat('H:i', $request->start_time);
+        $end = (clone $start)->addHours($mode->duration)->format('H:i');
+
+        // Verificar conflictos con otros horarios (excluirse a sí mismo)
+        $conflict = schedules::where('days', $request->days)
+            ->where('sportcourt_id', $request->sportcourt_id)
+            ->where('id', '!=', $schedule->id)
+            ->where(function ($query) use ($request, $end) {
+                $query->where('start_time', '<', $end)
+                    ->where('end_time', '>', $request->start_time);
+            })
+            ->first();
+
+        if ($conflict) {
+            return response()->json([
+                'message' => 'No se puede actualizar el horario porque se cruza con otro existente.',
+                'conflict_schedule' => $conflict,
+                'status' => 409,
+            ], 409);
+        }
+
+        // Actualizar con datos nuevos
+        $schedule->update([
+            'days' => $request->days,
+            'sportcourt_id' => $request->sportcourt_id,
+            'mode_id' => $request->mode_id,
+            'start_time' => $request->start_time,
+            'end_time' => $end,
+            'status' => $request->status,
+        ]);
 
         return response()->json([
             'message' => 'Horario actualizado correctamente',
