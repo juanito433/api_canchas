@@ -35,7 +35,8 @@ class modeController extends Controller
     }
 
     /* Todas las modalidades de un deporte*/
-    public function showModesBySport(Request $request) {
+    public function showModesBySport(Request $request)
+    {
         $sport = sport::find($request->sport_id);
 
         if (is_null($sport)) {
@@ -97,6 +98,7 @@ class modeController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:255',
             'description' => 'required',
+            'color' => 'nullable|string|max:20', // Validación del color
         ]);
 
         if ($validator->fails()) {
@@ -110,24 +112,29 @@ class modeController extends Controller
         $mode = mode::create([
             'name' => $request->name,
             'description' => $request->description,
+            'color' => $request->color, // Guardamos el color
         ]);
 
         return response()->json($mode, 201);
     }
-    //actualizar una modalidad
+
+    // Actualizar una modalidad
     public function update(Request $request)
     {
         $mode = mode::find($request->id);
         if (!$mode) {
             return response()->json([
-                'message' => 'Modalidad no encontrado',
+                'message' => 'Modalidad no encontrada',
                 'status' => 404,
             ], 404);
         }
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:255',
             'description' => 'required',
+            'color' => 'nullable|string|max:20', // Validación del color
         ]);
+
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'Error al validar los datos',
@@ -135,17 +142,19 @@ class modeController extends Controller
                 'status' => 400,
             ], 400);
         }
-        $mode->update(
-            [
-                'name' => $request->name,
-                'description' => $request->description,
-            ]
-        );
+
+        $mode->update([
+            'name' => $request->name,
+            'description' => $request->description,
+            'color' => $request->color, // Actualizamos el color
+        ]);
+
         return response()->json([
-            'message' => 'Modalidad actualizado correctamente',
+            'message' => 'Modalidad actualizada correctamente',
             'status' => 200,
         ], 200);
     }
+
     //eliminar una modalidad
     public function destroy(Request $request)
     {

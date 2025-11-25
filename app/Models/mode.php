@@ -12,6 +12,7 @@ class mode extends Model
     protected $fillable = [
         'name',
         'description',
+        'color',
     ];
     public function schedules()
     {
