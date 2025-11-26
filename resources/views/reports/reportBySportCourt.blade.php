@@ -35,6 +35,22 @@
             color: white;
         }
 
+        /* Estilo para la sección de penalizaciones */
+        .penalties-section th {
+            background: #b71c1c;
+            /* Rojo para penalizaciones */
+        }
+
+        .penalties-section table {
+            margin-top: 15px;
+            border: 1px solid #b71c1c;
+        }
+
+        .penalties-section td {
+            border: 1px solid #e0e0e0;
+        }
+
+        /* Título de sección general */
         .section-title {
             margin-top: 35px;
             font-size: 16px;
@@ -42,9 +58,23 @@
             text-transform: uppercase;
         }
 
+        /* Título de sección de penalizaciones */
+        .penalties-section .section-title {
+            color: #b71c1c;
+            border-bottom: 2px solid #b71c1c;
+            padding-bottom: 5px;
+        }
+
         .chart {
             margin-top: 25px;
             text-align: center;
+        }
+
+        /* Filas sin datos */
+        .empty-row {
+            color: #777;
+            font-style: italic;
+            background-color: #fcf8f8;
         }
 
         .page-break {
@@ -65,6 +95,7 @@
     <p><strong>Cancha:</strong> {{ $courtNumber }}</p>
     <p><strong>Período:</strong> {{ $startDate }} a {{ $endDate }}</p>
     <p><strong>Total de reservas:</strong> {{ $reservations->count() }}</p>
+    <p><strong>Total de penalizaciones:</strong> {{ $penalties->count() }}</p> <!-- Agregado el total de penalizaciones -->
 
     <hr>
 
@@ -84,17 +115,23 @@
         </thead>
 
         <tbody>
-            @foreach ($reservations as $r)
+            @forelse ($reservations as $r)
             <tr>
                 <td>{{ $r->id }}</td>
                 <td>{{ $r->user->id }}</td>
-                <td>{{ $r->date }}</td>
+                <td>{{ \Carbon\Carbon::parse($r->date)->format('d/m/Y') }}</td>
                 <td>{{ $r->created_at->format('Y-m-d H:i') }}</td>
                 <td>{{ $r->schedule->start_time }} - {{ $r->schedule->end_time }}</td>
                 <td>{{ $r->schedule->mode->name }}</td>
                 <td>{{ ucfirst($r->status) }}</td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+                <td colspan="7" style="text-align: center; color: #777;" class="empty-row">
+                    No hay reservas registradas para esta cancha en el período seleccionado.
+                </td>
+            </tr>
+            @endforelse
         </tbody>
     </table>
 
@@ -105,6 +142,53 @@
     <div class="chart">
         <img src="data:image/png;base64,{{ $chartImage }}" style="width: 80%; height: auto;">
     </div>
+
+    <!-- INICIO: SECCIÓN DE PENALIZACIONES -->
+    <div class="page-break"></div>
+    <div class="penalties-section">
+
+        <h2 class="section-title">Registro de Penalizaciones (Relacionadas con Cancha {{ $courtNumber }})</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Folio de Usuario</th>
+                    <th>Usuario Penalizado</th>
+                    <th>Tipo de Penalización</th>
+                    <th>Deporte Asociado</th>
+                    <th>Folio Reserva</th>
+                    <th>Aplicación</th>
+                    <th>Expiración</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($penalties as $penalty)
+                <tr>
+                    <td>#{{ $penalty['user_id'] }}</td>
+                    <td>{{ $penalty['user_name'] }}</td>
+                    <td>{{ $penalty['penalty_type'] }}</td>
+                    <td>{{ $penalty['sport'] }}</td>
+                    <td>{{ $penalty['reservation_id'] }}</td>
+                    <td>{{ \Carbon\Carbon::parse($penalty['date'])->format('d/m/Y') }}</td>
+                    <td>{{ \Carbon\Carbon::parse($penalty['expiration_date'])->format('d/m/Y') }}</td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="7" style="text-align: center; color: #777;" class="empty-row">
+                        No se registraron penalizaciones relacionadas con esta cancha en el período seleccionado.
+                    </td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+    <!-- FIN: SECCIÓN DE PENALIZACIONES -->
+
+    <footer>
+        <p style="text-align: center; font-size: 10px; color: #999;">
+            Reporte generado automáticamente por el sistema de gestión del club.
+        </p>
+    </footer>
 
 </body>
 
