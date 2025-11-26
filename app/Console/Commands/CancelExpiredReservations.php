@@ -57,10 +57,14 @@ class CancelExpiredReservations extends Command
                     'status' => 'Penalizada', // Más descriptivo que 'Cancelado' si fue por el sistema
                     'confirmation' => 'Expirada'
                 ]);
-
+                // 2. Actualizar estado del horario (schedule)
+                $reservation->schedule->update([
+                    'status' => 'Disponible'  // 👈 cambio solicitado
+                ]);
                 // 4.2. Crear la penalización
                 Penalty::create([
                     'user_id' => $reservation->user_id,
+                    'reservation_id' => $reservation->id,
                     'cause' => 'No confirmó su reserva a tiempo. Reserva Folio: ' . $reservation->id,
                     'date' => $now, // Dejar que Carbon maneje el tipo de dato si la columna es timestamp
                     'expiration_date' => $now->copy()->addDays(15), // Dejar que Carbon maneje el tipo de dato
