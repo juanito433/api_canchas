@@ -15,11 +15,16 @@ class penalty extends Model
         'date',
         'expiration_date',
         'user_id',
+        'reservation_id',
     ];
 
     //Una penalización solo puede tener un miembro
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+    public function reservation()
+    {
+        return $this->belongsTo(Reservation::class);
     }
 }

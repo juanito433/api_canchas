@@ -40,4 +40,8 @@ class reservation extends Model
     {
         return $this->belongsTo(schedules::class);
     }
+    public function penalties()
+    {
+        return $this->hasMany(Penalty::class);
+    }
 }

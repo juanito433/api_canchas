@@ -21,7 +21,7 @@ class PenaltyController extends Controller
     }
 
     /**
-     * 🔹 Mostrar penalizaciones activas de un usuario (por ID)
+     * Mostrar penalizaciones activas de un usuario (por ID)
      */
     public function show(Request $request)
     {
@@ -55,10 +55,28 @@ class PenaltyController extends Controller
             'latest_expiration' => $latestExpiration,
         ], 200);
     }
+    public function getPenaltiesByUser($user_id)
+    {
+        // Obtener penalizaciones con la relación de reserva incluida
+        $penalties = Penalty::where('user_id', $user_id)
+            ->with('reservation') // incluye datos de la reserva
+            ->orderBy('date', 'desc')
+            ->get();
 
-    /**
-     * 🔹 Crear una nueva penalización (solo admin puede hacerlo)
-     */
+        // Verificar si no tiene penalizaciones
+        if ($penalties->isEmpty()) {
+            return response()->json([
+                'message' => 'Este usuario no tiene penalizaciones registradas.',
+                'data' => [],
+            ], 200);
+        }
+
+        return response()->json([
+            'message' => 'Penalizaciones obtenidas correctamente.',
+            'data' => $penalties,
+        ], 200);
+    }
+
     public function store(Request $request)
     {
         // Verificar que el usuario autenticado sea admin
@@ -72,6 +90,7 @@ class PenaltyController extends Controller
         // Validar datos de entrada
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|integer|exists:users,id',
+            'reservation_id' => 'nullable|integer|exists:reservations,id',
             'cause' => 'required|string|max:255',
             'date' => 'required|date',
             'expiration_date' => 'required|date|after_or_equal:date',
@@ -89,6 +108,7 @@ class PenaltyController extends Controller
         // Crear penalización
         $penalty = Penalty::create([
             'user_id' => $request->user_id,
+            'reservation_id' => $request->reservation_id, // 👈 nuevo campo
             'cause' => $request->cause,
             'date' => $request->date,
             'expiration_date' => $request->expiration_date,
@@ -100,6 +120,7 @@ class PenaltyController extends Controller
             'data' => $penalty
         ], 201);
     }
+
 
     /**
      * 🔹 Actualizar penalización existente
@@ -115,7 +136,9 @@ class PenaltyController extends Controller
             ], 404);
         }
 
+        // Validaciones incluyendo reservation_id
         $validator = Validator::make($request->all(), [
+            'reservation_id' => 'nullable|integer|exists:reservations,id',
             'cause' => 'required|string|max:255',
             'date' => 'required|date',
             'expiration_date' => 'required|date|after_or_equal:date',
@@ -130,13 +153,21 @@ class PenaltyController extends Controller
             ], 422);
         }
 
-        $penalty->update($request->all());
+        // Actualizar penalización
+        $penalty->update([
+            'reservation_id' => $request->reservation_id, // 👈 nuevo
+            'cause' => $request->cause,
+            'date' => $request->date,
+            'expiration_date' => $request->expiration_date,
+            'penalty' => $request->penalty,
+        ]);
 
         return response()->json([
             'message' => 'Penalización actualizada correctamente',
             'data' => $penalty
         ], 200);
     }
+
 
     /**
      * 🔹 Eliminar penalización
