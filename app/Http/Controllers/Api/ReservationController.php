@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\mode;
+use App\Models\penalty;
 use App\Models\reservation;
 use App\Models\schedules;
 use App\Models\sport;
@@ -121,7 +122,7 @@ class ReservationController extends Controller
     //Realizar una reservacion de una cancha
     public function storage(Request $request)
     {
-        // === 1️⃣ Validar los datos recibidos ===
+        // === 1️⃣ Validar los datos recibidos (IGUAL QUE ANTES) ===
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|exists:users,id',
             'schedule_id' => 'required|exists:schedules,id',
@@ -140,13 +141,39 @@ class ReservationController extends Controller
             ], 422);
         }
 
+        // =================================================================
+        // 🔥 CORRECCIÓN AQUÍ: === 2️⃣ Verificar penalización vs Fecha de Reserva ===
+        // =================================================================
+        // Buscamos si existe una penalización cuya fecha de expiración sea 
+        // MAYOR o IGUAL a la fecha que el usuario quiere reservar.
+
+        $blockingPenalty = penalty::where('user_id', $request->user_id)
+            ->whereDate('expiration_date', '>=', $request->date) // <--- EL CAMBIO CLAVE
+            ->orderBy('expiration_date', 'desc') // Tomamos la que termine más lejos por si hay varias
+            ->first();
+
+        if ($blockingPenalty) {
+            return response()->json([
+                // Mensaje más claro explicándole por qué no puede reservar ESE día
+                'message' => 'No puedes reservar para la fecha ' . $request->date . '. Tienes una penalización vigente que cubre hasta el ' . $blockingPenalty->expiration_date,
+                'penalty' => [
+                    'cause' => $blockingPenalty->cause,
+                    'expiration_date' => $blockingPenalty->expiration_date,
+                    'penalty' => $blockingPenalty->penalty,
+                    'reservation_id' => $blockingPenalty->reservation_id,
+                ],
+                'status' => 403,
+            ], 403);
+        }
+        // =================================================================
+
         try {
             $reservation = DB::transaction(function () use ($request) {
 
-                // === 2️⃣ Obtener el horario que se desea reservar ===
+                // === 3️⃣ Verificar horario objetivo (IGUAL) ===
                 $newSchedule = Schedules::findOrFail($request->schedule_id);
 
-                // === 3️⃣ Verificar si el mismo usuario ya tiene una reserva que se solape ===
+                // === 4️⃣ Verificar reservas que se solapen (IGUAL) ===
                 $conflictingReservation = Reservation::where('user_id', $request->user_id)
                     ->where('date', $request->date)
                     ->where('status', '!=', 'Cancelada')
@@ -158,7 +185,6 @@ class ReservationController extends Controller
                     })
                     ->first();
 
-                // Si existe una reserva que genera conflicto, se devuelve su información
                 if ($conflictingReservation) {
                     $schedule = $conflictingReservation->schedule;
                     $sportCourt = $schedule->sportCourt;
@@ -166,7 +192,7 @@ class ReservationController extends Controller
                     $sport = $sportCourt->sport;
 
                     return response()->json([
-                        'message' => 'Ya tienes otra reserva que se solapa con este horario. Por favor elige otro.',
+                        'message' => 'Ya tienes otra reserva que se solapa con este horario.',
                         'conflict' => [
                             'folio' => $conflictingReservation->id,
                             'start_time' => $schedule->start_time,
@@ -180,7 +206,7 @@ class ReservationController extends Controller
                     ], 409);
                 }
 
-                // === 4️⃣ Verificar y bloquear horario disponible ===
+                // === 5️⃣ Verificar horario disponible (IGUAL) ===
                 $schedule = Schedules::where('id', $request->schedule_id)
                     ->where('status', 'Disponible')
                     ->lockForUpdate()
@@ -190,7 +216,7 @@ class ReservationController extends Controller
                     throw new \Exception('Horario no disponible o ya reservado.');
                 }
 
-                // === 5️⃣ Crear la nueva reserva ===
+                // === 6️⃣ Crear reserva (IGUAL) ===
                 $reservation = Reservation::create([
                     'user_id' => $request->user_id,
                     'schedule_id' => $request->schedule_id,
@@ -200,23 +226,21 @@ class ReservationController extends Controller
                     'status' => $request->status,
                 ]);
 
-                // Cambiar estado del horario a "Ocupado"
+                // === 7️⃣ Marcar horario como ocupado (IGUAL) ===
                 $schedule->status = 'Ocupado';
                 $schedule->save();
 
                 return $reservation;
             });
 
-            // === 6️⃣ Si se devolvió un conflicto ===
             if ($reservation instanceof \Illuminate\Http\JsonResponse && $reservation->getStatusCode() === 409) {
                 return $reservation;
             }
 
-            // === 7️⃣ Respuesta exitosa ===
             return response()->json([
                 'message' => 'Reservación registrada correctamente.',
                 'reservation' => [
-                    'folio' => $reservation->id, // ✅ ID de la reserva creada
+                    'folio' => $reservation->id,
                     'user_id' => $reservation->user_id,
                     'schedule_id' => $reservation->schedule_id,
                     'date' => $reservation->date,
@@ -232,6 +256,7 @@ class ReservationController extends Controller
             ], 500);
         }
     }
+
 
 
 
