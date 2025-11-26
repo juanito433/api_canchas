@@ -182,6 +182,7 @@
         <table class="penalties-table">
             <thead>
                 <tr>
+                    <th>Folio de penalización</th>
                     <th>Folio de Usuario</th>
                     <th>Usuario Penalizado</th>
                     <th>Tipo de Penalización</th>
@@ -194,7 +195,8 @@
             <tbody>
                 @forelse ($penalties as $penalty)
                 <tr>
-                    <td>#{{ $penalty['user_id'] }}</td>
+                    <td>{{ $penalty['folio'] }}</td>
+                    <td>{{ $penalty['user_id'] }}</td>
                     <td>{{ $penalty['user_name'] }}</td>
                     <td>{{ $penalty['penalty_type'] }}</td>
                     <td>{{ $penalty['sport'] }}</td>
