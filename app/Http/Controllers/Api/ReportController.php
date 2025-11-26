@@ -120,8 +120,9 @@ class ReportController extends Controller
                 }
 
                 return [
+                    'folio'             => $penalty->id,
                     'user_id'           => $penalty->user->id ?? 'N/A', // ¡NUEVO CAMPO AÑADIDO!
-                    'user_name'         => $penalty->user->name ?? 'Usuario Eliminado',
+                    'user_name'         => $penalty->user->name . ' ' . $penalty->user->lastname ?? 'Usuario Eliminado',
                     'penalty_type'      => $penalty->penalty,
                     'sport'             => $sportName,
                     'reservation_id'    => $penalty->reservation_id ?? 'N/A',
@@ -245,8 +246,9 @@ class ReportController extends Controller
                 $sportName = $penalty->reservation->schedule->sportcourt->sport->name ?? 'N/A';
 
                 return [
+                    'folio'             => $penalty->id,
                     'user_id'           => $penalty->user->id ?? 'N/A',
-                    'user_name'         => $penalty->user->name ?? 'Usuario Eliminado',
+                    'user_name'         => $penalty->user->name . ' ' . $penalty->user->lastname ?? 'Usuario Eliminado',
                     'penalty_type'      => $penalty->penalty,
                     'sport'             => $sportName,
                     'reservation_id'    => $penalty->reservation_id ?? 'N/A',
@@ -358,8 +360,9 @@ class ReportController extends Controller
                 // ya que el filtro `whereHas` lo garantiza.
 
                 return [
+                    'folio'             => $penalty->id,
                     'user_id'           => $penalty->user->id ?? 'N/A',
-                    'user_name'         => $penalty->user->name ?? 'Usuario Eliminado',
+                    'user_name'         => $penalty->user->name . ' ' . $penalty->user->lastname ?? 'Usuario Eliminado',
                     'penalty_type'      => $penalty->penalty,
                     'sport'             => $sportName, // Usamos el nombre del deporte ya obtenido
                     'reservation_id'    => $penalty->reservation_id ?? 'N/A',
