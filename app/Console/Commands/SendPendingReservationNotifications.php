@@ -8,47 +8,78 @@ use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class SendPendingReservationNotifications extends Command
 {
     protected $signature = 'notify:pending-reservations';
-    protected $description = 'Envía notificaciones 10 minutos antes de una reserva pendiente por confirmar';
+    protected $description = 'Notifica reservas pendientes prox 10 min (Con Fix de Logs y Cache)';
+
+    /**
+     * FUNCIÓN PARA ARREGLAR EL ERROR DE PERMISOS EN WINDOWS
+     * Escribe en un archivo separado para no pelear con laravel.log
+     */
+    private function customLog($message, $level = 'info')
+    {
+        try {
+            Log::build([
+                'driver' => 'single',
+                'path' => storage_path('logs/scheduler_notificaciones.log'), // Archivo exclusivo
+            ])->$level($message);
+        } catch (\Exception $e) {
+            // Si falla el log, no detenemos el programa, solo lo mostramos en consola si es posible
+            $this->error("Error escribiendo log: " . $e->getMessage());
+        }
+    }
 
     public function handle()
     {
-        // 1. Obtener la hora actual y sumar 10 minutos exactos
-        // Importante: Ajusta la timezone si es necesario. Ej: 'America/Mexico_City'
-        // Si tu APP_TIMEZONE en .env es correcta, usa solo Carbon::now()
-        $targetTime = Carbon::now()->addMinutes(10)->seconds(0);
+        // 1. Definir ventana de tiempo (Ahora -> Ahora + 10 min)
+        $now = Carbon::now();
+        $tenMinutesFromNow = $now->copy()->addMinutes(10);
 
-        $targetDateString = $targetTime->toDateString(); // Ej: 2023-11-24
-        $targetTimeString = $targetTime->format('H:i:s'); // Ej: 14:30:00
+        // Usamos customLog en lugar de Log::info
+        $this->customLog("🔍 Buscando reservas entre {$now->toTimeString()} y {$tenMinutesFromNow->toTimeString()}");
 
-        Log::info('NOTIFY COMMAND - Buscando reservas para:', [
-            'fecha_objetivo' => $targetDateString,
-            'hora_inicio_objetivo' => $targetTimeString
-        ]);
-
-        // 2. Buscar reservas
-        // Coincidencia: Que la fecha sea hoy Y la hora del horario sea igual a (Ahora + 10min)
+        // 2. Buscar Reservas
         $pending = Reservation::with(['user', 'schedule.sportcourt'])
             ->where('confirmation', 'Pendiente')
-            ->whereDate('date', $targetDateString)
-            ->whereHas('schedule', function ($q) use ($targetTimeString) {
-                $q->where('start_time', $targetTimeString);
+            ->whereDate('date', $now->toDateString())
+            ->whereHas('schedule', function ($q) use ($now, $tenMinutesFromNow) {
+                // Rango: Que la hora sea mayor a AHORA y menor o igual a AHORA+10
+                $q->whereTime('start_time', '>', $now->toTimeString())
+                    ->whereTime('start_time', '<=', $tenMinutesFromNow->toTimeString());
             })
             ->get();
 
-        Log::info("Reservas encontradas: " . $pending->count());
+        if ($pending->isEmpty()) {
+            // Opcional: Descomenta si quieres ver heartbeat cada minuto
+            // $this->customLog("No hay reservas pendientes en rango.");
+            return;
+        }
 
         foreach ($pending as $reserva) {
-            // Validar Token
-            if (!$reserva->user || !$reserva->user->expo_push_token) {
-                Log::warning("Usuario sin token o no encontrado. Reserva ID: {$reserva->id}");
+            // Validaciones
+            if (!$reserva->user || empty($reserva->user->expo_push_token)) {
                 continue;
             }
 
-            $this->sendNotificationToUser($reserva);
+            // 3. EVITAR SPAM CON CACHE
+            $cacheKey = "notified_reservation_{$reserva->id}";
+
+            if (Cache::has($cacheKey)) {
+                $this->customLog("⏭️ Reserva {$reserva->id} ya notificada. Saltando.");
+                continue;
+            }
+
+            // Enviar notificación
+            $sent = $this->sendNotificationToUser($reserva);
+
+            if ($sent) {
+                // 4. BLOQUEAR POR 30 MINUTOS
+                // Así aseguramos que solo se envíe 1 vez por reserva
+                Cache::put($cacheKey, true, now()->addMinutes(30));
+            }
         }
 
         $this->info('Proceso finalizado.');
@@ -58,45 +89,43 @@ class SendPendingReservationNotifications extends Command
     {
         $user = $reserva->user;
         $schedule = $reserva->schedule;
-        $cancha = $schedule->sportcourt->name ?? 'Cancha desconocida';
+        $cancha = $schedule->sportcourt->name ?? 'Cancha';
 
-        // Formatear la hora para que se vea bien (ej: 14:00)
-        $horaLegible = Carbon::parse($schedule->start_time)->format('H:i');
+        $startTime = Carbon::parse($schedule->start_time);
+        $minutesLeft = Carbon::now()->diffInMinutes($startTime, false);
+        $horaLegible = $startTime->format('g:i A');
 
         try {
-            // 1. Crear el aviso en la BD (Notice)
-            // Asumimos que user_id=1 es el sistema o admin.
+            // Guardar Aviso en BD
             $notice = Notice::create([
-                'title'          => "⏳ Confirma tu reserva",
-                'content'        => "Tu juego en {$cancha} comienza a las {$horaLegible}. ¡Confirma asistencia ahora!",
-                'user_id'        => 1, // ID del creador del aviso (Admin/Sistema)
+                'title'          => "⏳ ¡Tu juego comienza pronto!",
+                'content'        => "Faltan {$minutesLeft} min para tu juego en {$cancha}. ¡Confirma!",
+                'user_id'        => 1, // ID Admin
                 'date_published' => now(),
             ]);
 
-            // 2. Relacionar aviso con el usuario ESPECÍFICO (Tabla Pivote notice_user)
-            // Esto hace que la notificación sea privada para este usuario
             $notice->users()->attach($user->id, ['created_at' => now(), 'updated_at' => now()]);
 
-            Log::info("Aviso guardado en BD para usuario {$user->id}");
-
-            // 3. Enviar Push a Expo
-            $response = Http::post('https://exp.host/--/api/v2/push/send', [
+            // Enviar Push a Expo
+            Http::post('https://exp.host/--/api/v2/push/send', [
                 [
                     'to'    => $user->expo_push_token,
                     'sound' => 'default',
-                    'title' => "⏳ Confirma tu reserva",
-                    'body'  => "Faltan 10 min para tu juego en {$cancha}. Toca para confirmar.",
+                    'title' => "⏳ ¡Acción Requerida!",
+                    'body'  => "Faltan {$minutesLeft} min ({$horaLegible}). Toca para confirmar asistencia.",
                     'data'  => [
-                        'screen' => 'ReservationDetails', // Opcional: Para navegar en React Native
+                        'screen'         => 'ReservationDetails',
                         'reservation_id' => $reserva->id,
-                        'notice_id' => $notice->id
+                        'notice_id'      => $notice->id
                     ],
                 ]
             ]);
 
-            Log::info('Push enviado', ['status' => $response->status(), 'user' => $user->id]);
+            $this->customLog("✅ Push enviado (Faltan {$minutesLeft} min) - Reserva {$reserva->id}");
+            return true;
         } catch (\Exception $e) {
-            Log::error("Error enviando notificación: " . $e->getMessage());
+            $this->customLog("❌ Error enviando a Reserva {$reserva->id}: " . $e->getMessage(), 'error');
+            return false;
         }
     }
 }
