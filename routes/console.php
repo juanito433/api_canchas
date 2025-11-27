@@ -19,6 +19,8 @@ Schedule::command('reservations:cancel-expired')
 Schedule::command('notify:pending-reservations')
     ->everyMinute()
     ->environments(['local', 'production'])
+    ->runInBackground(false)
+    ->appendOutputTo(storage_path('logs/notificaciones_reserva.log'))
     ->runInBackground();
 
 Schedule::command('reservations:check-finished')
