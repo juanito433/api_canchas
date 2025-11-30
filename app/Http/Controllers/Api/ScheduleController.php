@@ -58,12 +58,13 @@ class ScheduleController extends Controller
 
     public function storage(Request $request)
     {
-        // Validación inicial (sin end_time porque se calculará)
+        // 1. Validación inicial
         $validator = Validator::make($request->all(), [
-            'days' => 'required',
+            'days' => 'required', // OJO: Verifica si en tu BD es 'days', 'day' o 'date'
             'sportcourt_id' => 'required|integer',
             'mode_id' => 'required|integer',
             'start_time' => 'required|date_format:H:i',
+            'force' => 'boolean' // <--- Aceptamos el parámetro opcional
         ]);
 
         if ($validator->fails()) {
@@ -74,37 +75,46 @@ class ScheduleController extends Controller
             ], 422);
         }
 
-        // Obtener modalidad (para saber duración)
+        // 2. Obtener modalidad y calcular duración
         $mode = Mode::find($request->mode_id);
         if (!$mode) {
-            return response()->json([
-                'message' => 'Modalidad no encontrada',
-                'status' => 404,
-            ], 404);
+            return response()->json(['message' => 'Modalidad no encontrada', 'status' => 404], 404);
         }
 
-        // Calcular end_time usando la duración de la modalidad
+        // Calcular end_time
         $start = Carbon::createFromFormat('H:i', $request->start_time);
+        // Asegúrate si duration en tu BD son horas (int) o minutos. 
+        // Si es int (ej: 1, 2), addHours está bien.
         $end = (clone $start)->addHours($mode->duration)->format('H:i');
 
-        // Verificar conflictos
-        $conflict = schedules::where('days', $request->days)
+        // 3. BUSCAR CONFLICTOS (Todos, no solo el primero)
+        $conflicts = schedules::where('days', $request->days) // <--- Verifica nombre columna
             ->where('sportcourt_id', $request->sportcourt_id)
             ->where(function ($query) use ($request, $end) {
+                // Lógica de cruce de horarios
                 $query->where('start_time', '<', $end)
                     ->where('end_time', '>', $request->start_time);
             })
-            ->first();
+            ->get(); // <--- Usamos get() para traer todos los posibles choques
 
-        if ($conflict) {
-            return response()->json([
-                'message' => 'No se puede registrar el horario porque se cruza con otro existente.',
-                'conflict_schedule' => $conflict,
-                'status' => 409,
-            ], 409);
+        // 4. LÓGICA DE SOBRESCRITURA
+        if ($conflicts->isNotEmpty()) {
+
+            // Si NO se envió la bandera 'force' o es falsa
+            if (!$request->boolean('force')) {
+                return response()->json([
+                    'message' => 'El horario choca con reservas existentes.',
+                    'conflict' => true, // Bandera para que React Native muestre la alerta
+                    'status' => 409,
+                ], 409);
+            }
+
+            // Si force es TRUE, eliminamos los estorbos
+            $idsToDelete = $conflicts->pluck('id');
+            schedules::destroy($idsToDelete);
         }
 
-        // Crear el nuevo horario
+        // 5. Crear el nuevo horario
         $schedule = schedules::create([
             'days' => $request->days,
             'sportcourt_id' => $request->sportcourt_id,
@@ -117,10 +127,10 @@ class ScheduleController extends Controller
         return response()->json([
             'message' => 'Horario creado correctamente',
             'schedule' => $schedule,
+            'deleted_ids' => isset($idsToDelete) ? $idsToDelete : [], // Para limpiar visualmente
             'status' => 201,
         ], 201);
     }
-
 
 
     public function update(Request $request)
