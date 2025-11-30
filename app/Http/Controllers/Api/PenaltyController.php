@@ -79,14 +79,7 @@ class PenaltyController extends Controller
 
     public function store(Request $request)
     {
-        // Verificar que el usuario autenticado sea admin
-        if ($request->user()->role !== 'admin') {
-            return response()->json([
-                'message' => 'No tienes permiso para asignar penalizaciones',
-                'status' => 403,
-            ], 403);
-        }
-
+        
         // Validar datos de entrada
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|integer|exists:users,id',
