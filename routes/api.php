@@ -105,12 +105,12 @@ Route::get('/schedule/{id}', [ScheduleController::class, 'show']);
 // Registrar un nuevo horario
 Route::post('/schedule', [ScheduleController::class, 'storage']);
 // Actualizar un horario
-Route::put('/schedule/{id}', [ScheduleController::class, 'update'])->middleware('auth:sanctum');
+Route::put('/schedule/{id}', [ScheduleController::class, 'update']);
 // Eliminar un horario
-Route::delete('/schedule/{id}', [ScheduleController::class, 'destroy'])->middleware('auth:sanctum');
+Route::delete('/schedule/{id}', [ScheduleController::class, 'destroy']);
 /* Consulta de los horarios de un deporte especifico */
 Route::get('/schedule/sport/{id}', [ScheduleController::class, 'getSchedulesBySport']);
-
+Route::put('/schedules/{id}/update-mode', [ScheduleController::class, 'updateMode']);
 
 /* Reservas */
 // Consultar las reservas
