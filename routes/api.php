@@ -204,8 +204,8 @@ Route::get('/notices', [NoticeController::class, 'index']);
 Route::post('/notices/create', [NoticeController::class, 'store']);
 // Mostrar detalle de una notificación
 Route::get('/notices/{id}', [NoticeController::class, 'show']);
-
-
+//ultimas 3 del usuariio
+Route::get('/notices/latest', [NoticeController::class, 'getLatest']);
 
 /* Estadistacas de sabana  */
 Route::get('/statistics/daily', [StatisticController::class,'dailyStatistics']);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Penalty;
+use App\Models\reservation;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -29,30 +30,32 @@ class PenaltyController extends Controller
 
         $user = User::find($userId);
         if (!$user) {
-            return response()->json([
-                'message' => 'Usuario no encontrado',
-                'status' => 404,
-            ], 404);
+            return response()->json(['message' => 'Usuario no encontrado'], 404);
         }
 
-        // Penalizaciones activas (no vencidas)
-        $activePenalties = Penalty::where('user_id', $userId)
-            ->whereDate('expiration_date', '>=', Carbon::now()->toDateString())
-            ->orderBy('expiration_date', 'desc')
+        // 1. Obtener Historial de Penalizaciones
+        $allPenalties = Penalty::where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
             ->get();
 
-        if ($activePenalties->isEmpty()) {
-            return response()->json([
-                'total_penalties' => 0,
-                'latest_expiration' => null,
-            ], 200);
-        }
+        // 2. Calcular Penalizaciones Activas
+        $activePenaltiesCount = $allPenalties->filter(function ($penalty) {
+            return \Carbon\Carbon::parse($penalty->expiration_date)->isFuture();
+        })->count();
 
-        $latestExpiration = $activePenalties->first()->expiration_date;
+        // 3. CALCULAR RESERVAS ACTIVAS (NUEVO) 🟢
+        // Consideramos "Activas" las que son de hoy en adelante
+        // Si tienes una columna 'status', puedes agregar ->where('status', '!=', 'cancelled')
+        $activeReservationsCount = reservation::where('user_id', $userId)
+            ->whereDate('date', '>=', Carbon::now()->toDateString()) // Fecha mayor o igual a hoy
+            ->count();
 
+        // 4. Retornar todo junto
         return response()->json([
-            'total_penalties' => $activePenalties->count(),
-            'latest_expiration' => $latestExpiration,
+            'total_history' => $allPenalties->count(),
+            'active_penalties' => $activePenaltiesCount,
+            'active_reservations' => $activeReservationsCount, // 👈 Dato nuevo
+            'data' => $allPenalties
         ], 200);
     }
     public function getPenaltiesByUser($user_id)
@@ -79,7 +82,7 @@ class PenaltyController extends Controller
 
     public function store(Request $request)
     {
-        
+
         // Validar datos de entrada
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|integer|exists:users,id',

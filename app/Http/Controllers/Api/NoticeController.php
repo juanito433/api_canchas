@@ -35,7 +35,17 @@ class NoticeController extends Controller
 
         return response()->json($notice);
     }
+    // Obtener las últimas 3 notificaciones
+    public function getLatest()
+    {
+        // Ordenamos por fecha de creación descendente y tomamos 3
+        // Si las notificaciones son específicas por usuario, agrega: ->where('user_id', $userId)
+        $notices = Notice::orderBy('created_at', 'desc')
+            ->take(3)
+            ->get();
 
+        return response()->json($notices, 200);
+    }
     /**
      * 📨 Crear nueva notificación (solo administradores)
      */
