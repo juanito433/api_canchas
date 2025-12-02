@@ -103,7 +103,13 @@ class AuthController extends Controller
         // 2. Obtener usuario autenticado
         $user = $request->user();
 
+        // --- CORRECCIÓN: Validar que el usuario existe antes de continuar ---
+        if (!$user) {
+            return response()->json(['message' => 'No autorizado. Token inválido o expirado.'], 401);
+        }
+
         // 3. Verificar que la contraseña actual sea correcta
+        // Aquí era donde fallaba (línea 107) porque $user era null
         if (!Hash::check($request->current_password, $user->password)) {
             return response()->json([
                 'message' => 'La contraseña actual no es correcta.',
@@ -112,12 +118,8 @@ class AuthController extends Controller
         }
 
         // 4. Actualizar la contraseña
-        // Usamos fill y save para que Laravel maneje eventos si los tienes, o forceFill
         $user->password = Hash::make($request->password);
         $user->save();
-
-        // 5. Opcional: Borrar otros tokens para cerrar sesión en otros dispositivos
-        // $user->tokens()->where('id', '!=', $user->currentAccessToken()->id)->delete();
 
         return response()->json([
             'status' => 200,
