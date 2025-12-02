@@ -94,22 +94,21 @@ class AuthController extends Controller
     }
     public function changePassword(Request $request)
     {
-        // 1. Validar inputs
+        // 1. Validar inputs (Agregamos user_id)
         $request->validate([
+            'user_id' => 'required|integer|exists:users,id', // Validamos que envíen el ID y exista
             'current_password' => 'required|string',
             'password' => 'required|string|min:8|confirmed|different:current_password',
         ]);
 
-        // 2. Obtener usuario autenticado
-        $user = $request->user();
+        // 2. Buscar usuario manualmente por ID
+        $user = User::find($request->user_id);
 
-        // --- CORRECCIÓN: Validar que el usuario existe antes de continuar ---
         if (!$user) {
-            return response()->json(['message' => 'No autorizado. Token inválido o expirado.'], 401);
+            return response()->json(['message' => 'Usuario no encontrado.'], 404);
         }
 
-        // 3. Verificar que la contraseña actual sea correcta
-        // Aquí era donde fallaba (línea 107) porque $user era null
+        // 3. Verificar contraseña actual (Seguridad Crítica)
         if (!Hash::check($request->current_password, $user->password)) {
             return response()->json([
                 'message' => 'La contraseña actual no es correcta.',
@@ -117,7 +116,7 @@ class AuthController extends Controller
             ], 422);
         }
 
-        // 4. Actualizar la contraseña
+        // 4. Actualizar
         $user->password = Hash::make($request->password);
         $user->save();
 
