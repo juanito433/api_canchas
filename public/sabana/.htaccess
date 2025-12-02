@@ -1,0 +1,17 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  
+  # Indica que la base es la subcarpeta sabana
+  RewriteBase /sabana/
+
+  # Si el archivo solicitado es index.html, no hagas nada más
+  RewriteRule ^index\.html$ - [L]
+
+  # Si el archivo solicitado NO existe físicamente (!-f)
+  RewriteCond %{REQUEST_FILENAME} !-f
+  # Y si el directorio solicitado NO existe físicamente (!-d)
+  RewriteCond %{REQUEST_FILENAME} !-d
+  
+  # Entonces, redirige todo a index.html
+  RewriteRule . /sabana/index.html [L]
+</IfModule>
