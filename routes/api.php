@@ -105,12 +105,12 @@ Route::get('/schedule/{id}', [ScheduleController::class, 'show']);
 // Registrar un nuevo horario
 Route::post('/schedule', [ScheduleController::class, 'storage']);
 // Actualizar un horario
-Route::put('/schedule/{id}', [ScheduleController::class, 'update'])->middleware('auth:sanctum');
+Route::put('/schedule/{id}', [ScheduleController::class, 'update']);
 // Eliminar un horario
-Route::delete('/schedule/{id}', [ScheduleController::class, 'destroy'])->middleware('auth:sanctum');
+Route::delete('/schedule/{id}', [ScheduleController::class, 'destroy']);
 /* Consulta de los horarios de un deporte especifico */
 Route::get('/schedule/sport/{id}', [ScheduleController::class, 'getSchedulesBySport']);
-
+Route::put('/schedules/{id}/update-mode', [ScheduleController::class, 'updateMode']);
 
 /* Reservas */
 // Consultar las reservas
@@ -176,6 +176,8 @@ Route::get('/reports/sport-usage', [SvgController::class, 'generateSvgChart']);
 Route::post('/auth/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail']);
 /* reset de contraseñas  */
 Route::post('/auth/reset-password', [ResetPasswordController::class, 'reset']);
+//Cambio de contraseña del usuario
+Route::post('/auth/change-password', [AuthController::class, 'changePassword']);
 
 
 /* Notificaciones */
@@ -204,10 +206,8 @@ Route::get('/notices', [NoticeController::class, 'index']);
 Route::post('/notices/create', [NoticeController::class, 'store']);
 // Mostrar detalle de una notificación
 Route::get('/notices/{id}', [NoticeController::class, 'show']);
-
-
+//ultimas 3 del usuariio
+Route::get('/notices/latest', [NoticeController::class, 'getLatest']);
 
 /* Estadistacas de sabana  */
-Route::get('/statistics/daily', [StatisticController::class,'dailyStatistics']);
-
-
+Route::get('/statistics/daily', [StatisticController::class, 'dailyStatistics']);

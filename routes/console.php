@@ -27,3 +27,8 @@ Schedule::command('reservations:check-finished')
     ->everyMinute()
     ->environments(['local', 'production'])
     ->runInBackground();
+
+Schedule::command('horarios:reset')
+    ->dailyAt('00:00')
+    ->environments(['local', 'production'])
+    ->runInBackground();

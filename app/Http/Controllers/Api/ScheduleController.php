@@ -10,6 +10,8 @@ use App\Models\sportcourt;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Exception; // <--- Asegúrate de tener esto arriba del archivo
+use Illuminate\Support\Facades\Log;
 
 class ScheduleController extends Controller
 {
@@ -56,12 +58,13 @@ class ScheduleController extends Controller
 
     public function storage(Request $request)
     {
-        // Validación inicial (sin end_time porque se calculará)
+        // 1. Validación inicial
         $validator = Validator::make($request->all(), [
-            'days' => 'required',
+            'days' => 'required', // OJO: Verifica si en tu BD es 'days', 'day' o 'date'
             'sportcourt_id' => 'required|integer',
             'mode_id' => 'required|integer',
             'start_time' => 'required|date_format:H:i',
+            'force' => 'boolean' // <--- Aceptamos el parámetro opcional
         ]);
 
         if ($validator->fails()) {
@@ -72,37 +75,46 @@ class ScheduleController extends Controller
             ], 422);
         }
 
-        // Obtener modalidad (para saber duración)
+        // 2. Obtener modalidad y calcular duración
         $mode = Mode::find($request->mode_id);
         if (!$mode) {
-            return response()->json([
-                'message' => 'Modalidad no encontrada',
-                'status' => 404,
-            ], 404);
+            return response()->json(['message' => 'Modalidad no encontrada', 'status' => 404], 404);
         }
 
-        // Calcular end_time usando la duración de la modalidad
+        // Calcular end_time
         $start = Carbon::createFromFormat('H:i', $request->start_time);
+        // Asegúrate si duration en tu BD son horas (int) o minutos. 
+        // Si es int (ej: 1, 2), addHours está bien.
         $end = (clone $start)->addHours($mode->duration)->format('H:i');
 
-        // Verificar conflictos
-        $conflict = schedules::where('days', $request->days)
+        // 3. BUSCAR CONFLICTOS (Todos, no solo el primero)
+        $conflicts = schedules::where('days', $request->days) // <--- Verifica nombre columna
             ->where('sportcourt_id', $request->sportcourt_id)
             ->where(function ($query) use ($request, $end) {
+                // Lógica de cruce de horarios
                 $query->where('start_time', '<', $end)
                     ->where('end_time', '>', $request->start_time);
             })
-            ->first();
+            ->get(); // <--- Usamos get() para traer todos los posibles choques
 
-        if ($conflict) {
-            return response()->json([
-                'message' => 'No se puede registrar el horario porque se cruza con otro existente.',
-                'conflict_schedule' => $conflict,
-                'status' => 409,
-            ], 409);
+        // 4. LÓGICA DE SOBRESCRITURA
+        if ($conflicts->isNotEmpty()) {
+
+            // Si NO se envió la bandera 'force' o es falsa
+            if (!$request->boolean('force')) {
+                return response()->json([
+                    'message' => 'El horario choca con reservas existentes.',
+                    'conflict' => true, // Bandera para que React Native muestre la alerta
+                    'status' => 409,
+                ], 409);
+            }
+
+            // Si force es TRUE, eliminamos los estorbos
+            $idsToDelete = $conflicts->pluck('id');
+            schedules::destroy($idsToDelete);
         }
 
-        // Crear el nuevo horario
+        // 5. Crear el nuevo horario
         $schedule = schedules::create([
             'days' => $request->days,
             'sportcourt_id' => $request->sportcourt_id,
@@ -115,10 +127,10 @@ class ScheduleController extends Controller
         return response()->json([
             'message' => 'Horario creado correctamente',
             'schedule' => $schedule,
+            'deleted_ids' => isset($idsToDelete) ? $idsToDelete : [], // Para limpiar visualmente
             'status' => 201,
         ], 201);
     }
-
 
 
     public function update(Request $request)
@@ -320,5 +332,84 @@ class ScheduleController extends Controller
             'schedules' => $formatted,
             'empty' => false,
         ], 200);
+    }
+    /* Actualizar la modalidad de un horario */
+    public function updateMode(Request $request, $id)
+    {
+        try {
+            // LOG PARA DEBUG (Revisa storage/logs/laravel.log si puedes)
+            Log::info("Intento de updateMode ID: $id", $request->all());
+
+            // 1. Validar (Sin 'exists' para evitar errores de nombre de tabla por ahora)
+            $request->validate([
+                'mode_id'  => 'required',
+                'end_time' => 'required',
+                'force'    => 'nullable' // Aceptamos boolean o null
+            ]);
+
+            // 2. Buscar el horario
+            $schedule = Schedules::find($id);
+
+            if (!$schedule) {
+                return response()->json(['message' => 'Horario no encontrado'], 404);
+            }
+
+            // 3. DETECTAR CONFLICTOS
+            // IMPORTANTE: Asegúrate que 'date' sea el nombre real de tu columna en la BD.
+            $conflicts = Schedules::where('sportcourt_id', $schedule->sportcourt_id)
+                ->where('days', $schedule->days) // <--- ¿Tu columna se llama 'date', 'day' o 'fecha'?
+                ->where('id', '!=', $id)
+                ->where(function ($query) use ($schedule, $request) {
+                    // Lógica: (InicioA < FinB) y (FinA > InicioB)
+                    $query->where('start_time', '<', $request->end_time)
+                        ->where('end_time', '>', $schedule->start_time);
+                })
+                ->get();
+
+            if ($conflicts->isNotEmpty()) {
+
+                // Convertimos el parámetro 'force' a booleano real
+                $isForced = filter_var($request->force, FILTER_VALIDATE_BOOLEAN);
+
+                // Si NO se está forzando, devolvemos error 409
+                if (!$isForced) {
+                    return response()->json([
+                        'message' => 'El horario choca con otra reserva existente.',
+                        'conflict' => true // Bandera para el frontend
+                    ], 409);
+                }
+
+                // SI SE FUERZA: Eliminamos los conflictos
+                $idsToDelete = $conflicts->pluck('id')->toArray(); // <--- Convertir a array es más seguro
+                Schedules::destroy($idsToDelete);
+            }
+
+            // 4. Actualizar
+            $schedule->mode_id  = $request->mode_id;
+            $schedule->end_time = $request->end_time;
+            $schedule->save();
+
+            // 5. Cargar relación (try-catch interno por si falla el nombre de la relación)
+            try {
+                $schedule->load('mode');
+            } catch (Exception $eRel) {
+                // Ignoramos error de relación visual
+            }
+
+            return response()->json([
+                'message'  => 'Actualizado correctamente',
+                'schedule' => $schedule,
+                'deleted_ids' => isset($idsToDelete) ? $idsToDelete : []
+            ], 200);
+        } catch (Exception $e) {
+            // ESTO ENVIARÁ EL ERROR EXACTO A TU CELULAR
+            Log::error("Error Fatal en updateMode: " . $e->getMessage());
+
+            return response()->json([
+                'message' => 'PHP Error: ' . $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ], 500);
+        }
     }
 }

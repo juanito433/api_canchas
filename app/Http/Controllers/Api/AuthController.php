@@ -92,4 +92,36 @@ class AuthController extends Controller
             ], 500);
         }
     }
+    public function changePassword(Request $request)
+    {
+        // 1. Validar inputs
+        $request->validate([
+            'current_password' => 'required|string',
+            'password' => 'required|string|min:8|confirmed|different:current_password',
+        ]);
+
+        // 2. Obtener usuario autenticado
+        $user = $request->user();
+
+        // 3. Verificar que la contraseña actual sea correcta
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json([
+                'message' => 'La contraseña actual no es correcta.',
+                'errors' => ['current_password' => ['La contraseña actual es incorrecta.']]
+            ], 422);
+        }
+
+        // 4. Actualizar la contraseña
+        // Usamos fill y save para que Laravel maneje eventos si los tienes, o forceFill
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        // 5. Opcional: Borrar otros tokens para cerrar sesión en otros dispositivos
+        // $user->tokens()->where('id', '!=', $user->currentAccessToken()->id)->delete();
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Contraseña actualizada correctamente.'
+        ], 200);
+    }
 }

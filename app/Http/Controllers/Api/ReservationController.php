@@ -122,7 +122,7 @@ class ReservationController extends Controller
     //Realizar una reservacion de una cancha
     public function storage(Request $request)
     {
-        // === 1️⃣ Validar los datos recibidos (IGUAL QUE ANTES) ===
+        // Validar los datos recibidos
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|exists:users,id',
             'schedule_id' => 'required|exists:schedules,id',
@@ -140,21 +140,16 @@ class ReservationController extends Controller
                 'status' => 422,
             ], 422);
         }
-
-        // =================================================================
-        // 🔥 CORRECCIÓN AQUÍ: === 2️⃣ Verificar penalización vs Fecha de Reserva ===
-        // =================================================================
         // Buscamos si existe una penalización cuya fecha de expiración sea 
         // MAYOR o IGUAL a la fecha que el usuario quiere reservar.
 
         $blockingPenalty = penalty::where('user_id', $request->user_id)
-            ->whereDate('expiration_date', '>=', $request->date) // <--- EL CAMBIO CLAVE
-            ->orderBy('expiration_date', 'desc') // Tomamos la que termine más lejos por si hay varias
+            ->whereDate('expiration_date', '>=', $request->date)
+            ->orderBy('expiration_date', 'desc')
             ->first();
 
         if ($blockingPenalty) {
             return response()->json([
-                // Mensaje más claro explicándole por qué no puede reservar ESE día
                 'message' => 'No puedes reservar para la fecha ' . $request->date . '. Tienes una penalización vigente que cubre hasta el ' . $blockingPenalty->expiration_date,
                 'penalty' => [
                     'cause' => $blockingPenalty->cause,
@@ -165,15 +160,13 @@ class ReservationController extends Controller
                 'status' => 403,
             ], 403);
         }
-        // =================================================================
 
         try {
             $reservation = DB::transaction(function () use ($request) {
 
-                // === 3️⃣ Verificar horario objetivo (IGUAL) ===
                 $newSchedule = Schedules::findOrFail($request->schedule_id);
 
-                // === 4️⃣ Verificar reservas que se solapen (IGUAL) ===
+                // Verificar reservas que se solapen
                 $conflictingReservation = Reservation::where('user_id', $request->user_id)
                     ->where('date', $request->date)
                     ->where('status', '!=', 'Cancelada')
@@ -206,7 +199,7 @@ class ReservationController extends Controller
                     ], 409);
                 }
 
-                // === 5️⃣ Verificar horario disponible (IGUAL) ===
+                // Verificar horario disponible
                 $schedule = Schedules::where('id', $request->schedule_id)
                     ->where('status', 'Disponible')
                     ->lockForUpdate()
@@ -216,7 +209,7 @@ class ReservationController extends Controller
                     throw new \Exception('Horario no disponible o ya reservado.');
                 }
 
-                // === 6️⃣ Crear reserva (IGUAL) ===
+                // Crear reserva
                 $reservation = Reservation::create([
                     'user_id' => $request->user_id,
                     'schedule_id' => $request->schedule_id,
@@ -226,7 +219,7 @@ class ReservationController extends Controller
                     'status' => $request->status,
                 ]);
 
-                // === 7️⃣ Marcar horario como ocupado (IGUAL) ===
+                // Marcar horario como ocupado (IGUAL) ===
                 $schedule->status = 'Ocupado';
                 $schedule->save();
 
