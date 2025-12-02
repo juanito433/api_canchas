@@ -176,6 +176,8 @@ Route::get('/reports/sport-usage', [SvgController::class, 'generateSvgChart']);
 Route::post('/auth/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail']);
 /* reset de contraseñas  */
 Route::post('/auth/reset-password', [ResetPasswordController::class, 'reset']);
+//Cambio de contraseña del usuario
+Route::post('/auth/change-password', [AuthController::class, 'changePassword']);
 
 
 /* Notificaciones */
@@ -208,6 +210,4 @@ Route::get('/notices/{id}', [NoticeController::class, 'show']);
 Route::get('/notices/latest', [NoticeController::class, 'getLatest']);
 
 /* Estadistacas de sabana  */
-Route::get('/statistics/daily', [StatisticController::class,'dailyStatistics']);
-
-
+Route::get('/statistics/daily', [StatisticController::class, 'dailyStatistics']);
